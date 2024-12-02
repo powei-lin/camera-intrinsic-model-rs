@@ -144,9 +144,6 @@ impl<T: na::RealField + Clone> CameraModel<T> for EUCMT<T> {
 
         let mx = tilt_x * my.clone() / tilt_y + my.clone() * t2.clone() * t1.clone();
 
-        // let mx = (pt[0].clone() - cx.clone()) / fx.clone();
-        // let my = (pt[1].clone() - cy.clone()) / fy.clone();
-
         let r2 = mx.clone() * mx.clone() + my.clone() * my.clone();
         let gamma = one.clone() - alpha.clone();
 

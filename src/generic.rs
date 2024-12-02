@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use super::{KannalaBrandt4, OpenCVModel5, EUCM, EUCMT, UCM};
+use super::{Ftheta, KannalaBrandt4, OpenCVModel5, EUCM, EUCMT, UCM};
 use image::DynamicImage;
 use nalgebra as na;
 use num_dual::DualDVec64;
@@ -14,6 +14,7 @@ pub enum GenericModel<T: na::RealField> {
     OpenCVModel5(OpenCVModel5<T>),
     KannalaBrandt4(KannalaBrandt4<T>),
     EUCMT(EUCMT<T>),
+    Ftheta(Ftheta<T>),
 }
 macro_rules! generic_impl {
     ($fn_name:tt, $out:ty, $($v:tt: $t:ty),+) => {
@@ -24,6 +25,7 @@ macro_rules! generic_impl {
                 GenericModel::OpenCVModel5(open_cvmodel5) => $fn_name(open_cvmodel5, $($v),+),
                 GenericModel::KannalaBrandt4(kannala_brandt4) => $fn_name(kannala_brandt4, $($v),+),
                 GenericModel::EUCMT(eucmt) => $fn_name(eucmt, $($v),+),
+                GenericModel::Ftheta(ftheta) => $fn_name(ftheta, $($v),+),
             }
         }
     };
@@ -37,6 +39,7 @@ macro_rules! generic_impl_self {
                 GenericModel::OpenCVModel5(open_cvmodel5) => open_cvmodel5.$fn_name(),
                 GenericModel::KannalaBrandt4(kannala_brandt4) => kannala_brandt4.$fn_name(),
                 GenericModel::EUCMT(eucmt) => eucmt.$fn_name(),
+                GenericModel::Ftheta(ftheta) => ftheta.$fn_name(),
             }
         }
     };
@@ -48,6 +51,7 @@ macro_rules! generic_impl_self {
                 GenericModel::OpenCVModel5(open_cvmodel5) => open_cvmodel5.$fn_name($($v),+),
                 GenericModel::KannalaBrandt4(kannala_brandt4) => kannala_brandt4.$fn_name($($v),+),
                 GenericModel::EUCMT(eucmt) => eucmt.$fn_name($($v),+),
+                GenericModel::Ftheta(ftheta) => ftheta.$fn_name($($v),+),
             }
         }
     };
@@ -59,6 +63,7 @@ macro_rules! generic_impl_self {
                 GenericModel::OpenCVModel5(open_cvmodel5) => open_cvmodel5.$fn_name($($v),+),
                 GenericModel::KannalaBrandt4(kannala_brandt4) => kannala_brandt4.$fn_name($($v),+),
                 GenericModel::EUCMT(eucmt) => eucmt.$fn_name($($v),+),
+                GenericModel::Ftheta(ftheta) => ftheta.$fn_name($($v),+),
             }
         }
     };
@@ -89,6 +94,7 @@ impl GenericModel<f64> {
                 GenericModel::KannalaBrandt4(KannalaBrandt4::from(kannala_brandt4))
             }
             GenericModel::EUCMT(eucmt) => GenericModel::EUCMT(EUCMT::from(eucmt)),
+            GenericModel::Ftheta(ftheta) => GenericModel::Ftheta(Ftheta::from(ftheta)),
         }
     }
 }
@@ -103,6 +109,7 @@ impl FromStr for GenericModel<f64> {
             "kb4" | "KB4" => Ok(GenericModel::KannalaBrandt4(KannalaBrandt4::zeros())),
             "opencv5" | "OPENCV5" => Ok(GenericModel::OpenCVModel5(OpenCVModel5::zeros())),
             "eucmt" | "EUCMT" => Ok(GenericModel::EUCMT(EUCMT::zeros())),
+            "ftheta" | "FTHETA" => Ok(GenericModel::Ftheta(Ftheta::zeros())),
             _ => Err(std::fmt::Error),
         }
     }
@@ -132,6 +139,7 @@ impl GenericModel<num_dual::DualDVec64> {
                 GenericModel::KannalaBrandt4(KannalaBrandt4::from(kannala_brandt4))
             }
             GenericModel::EUCMT(eucmt) => GenericModel::EUCMT(EUCMT::from(eucmt)),
+            GenericModel::Ftheta(ftheta) => GenericModel::Ftheta(Ftheta::from(ftheta)),
         }
     }
 }

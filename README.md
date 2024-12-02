@@ -11,6 +11,7 @@ A pure rust camera intrinsic model library. Including
 * Unified Camera Model (UCM)
 * Kannala Brandt (KB4) aka OpenCV Fisheye
 * OpenCV (OPENCV5) aka `plumb_bob` in ROS
+* F-theta (FTHETA) by NVidia
 
 For calibration to get the precise parameters. Please use [camera-intrinsic-calibration](https://github.com/powei-lin/camera-intrinsic-calibration-rs)
 
@@ -32,4 +33,5 @@ Papers:
 
 ## TODO
 * [ ] Stereo Rectify
-* [ ] FTheta Model
+* [x] FTheta Model
+* [ ] Python bindings
