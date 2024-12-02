@@ -19,6 +19,9 @@ For calibration to get the precise parameters. Please use [camera-intrinsic-cali
 ```sh
 # undistort and remap
 cargo run -r --example remap
+
+# undistort and rectify
+cargo run -r --example stereo_rectify
 ```
 
 ## Acknowledgements
@@ -32,6 +35,6 @@ Papers:
 * Usenko, Vladyslav, Nikolaus Demmel, and Daniel Cremers. "The double sphere camera model." 2018 International Conference on 3D Vision (3DV). IEEE, 2018.
 
 ## TODO
-* [ ] Stereo Rectify
+* [x] Stereo Rectify
 * [x] FTheta Model
 * [ ] Python bindings

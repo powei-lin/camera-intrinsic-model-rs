@@ -101,3 +101,58 @@ pub fn estimate_new_camera_matrix_for_undistort(
     out[(1, 2)] = new_cy;
     out
 }
+
+pub fn stereo_rectify(
+    camera_model0: &GenericModel<f64>,
+    camera_model1: &GenericModel<f64>,
+    rvec: &na::Vector3<f64>,
+    tvec: &na::Vector3<f64>,
+    new_image_w_h: Option<(u32, u32)>,
+) -> (na::Rotation3<f64>, na::Rotation3<f64>, na::Matrix3<f64>) {
+    // compensate for rotation first
+    let r_half_inv = -rvec / 2.0;
+
+    // another rotation for compensating the translation
+    // use translation to determine x axis rectify or y axis rectify
+    let rotated_t = na::Rotation3::from_scaled_axis(r_half_inv) * tvec;
+    let idx = if rotated_t.x.abs() > rotated_t.y.abs() {
+        0
+    } else {
+        1
+    };
+    let axis_to_rectify = rotated_t[idx];
+    let translation_norm = rotated_t.norm();
+    let mut unit_vector = na::Vector3::zeros();
+    if axis_to_rectify > 0.0 {
+        unit_vector[idx] = 1.0;
+    } else {
+        unit_vector[idx] = -1.0;
+    }
+
+    let mut axis_for_rotation = rotated_t.cross(&unit_vector);
+    let axis_norm = axis_for_rotation.norm();
+    let mut rotation_for_compensating_translation = na::Rotation3::identity();
+    if axis_norm > 0.0 {
+        axis_for_rotation /= axis_norm;
+        axis_for_rotation *= (axis_to_rectify.abs() / translation_norm).acos();
+        rotation_for_compensating_translation = na::Rotation3::from_scaled_axis(axis_for_rotation);
+    }
+
+    let rotation_for_cam0 =
+        rotation_for_compensating_translation * na::Rotation3::from_scaled_axis(-r_half_inv);
+    let rotation_for_cam1 =
+        rotation_for_compensating_translation * na::Rotation3::from_scaled_axis(r_half_inv);
+
+    // new projection matrix
+    let new_cam_mat0 = camera_model0.estimate_new_camera_matrix_for_undistort(0.0, new_image_w_h);
+    let new_cam_mat1 = camera_model1.estimate_new_camera_matrix_for_undistort(0.0, new_image_w_h);
+    let mut avg_new_mat = na::Matrix3::identity();
+    let avg_f = (new_cam_mat0[(0, 0)] + new_cam_mat1[(0, 0)]) / 2.0;
+    avg_new_mat[(0, 0)] = avg_f;
+    avg_new_mat[(1, 1)] = avg_f;
+    let avg_cx = (new_cam_mat0[(0, 2)] + new_cam_mat1[(0, 2)]) / 2.0;
+    avg_new_mat[(0, 2)] = avg_cx;
+    let avg_cy = (new_cam_mat0[(1, 2)] + new_cam_mat1[(1, 2)]) / 2.0;
+    avg_new_mat[(1, 2)] = avg_cy;
+    (rotation_for_cam0, rotation_for_cam1, avg_new_mat)
+}

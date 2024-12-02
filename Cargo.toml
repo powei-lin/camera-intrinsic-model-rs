@@ -21,3 +21,10 @@ serde_json = "1.0.133"
 
 [[example]]
 name = "remap"
+
+[[example]]
+name = "stereo_rectify"
+
+[dev-dependencies]
+imageproc = "0.25.0"
+rand = "0.8.5"
