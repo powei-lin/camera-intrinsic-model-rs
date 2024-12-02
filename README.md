@@ -12,6 +12,7 @@ A pure rust camera intrinsic model library. Including
 * Kannala Brandt (KB4) aka OpenCV Fisheye
 * OpenCV (OPENCV5) aka `plumb_bob` in ROS
 
+For calibration to get the precise parameters. Please use [camera-intrinsic-calibration](https://github.com/powei-lin/camera-intrinsic-calibration-rs)
 
 ## Examples
 ```sh
