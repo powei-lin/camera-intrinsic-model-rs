@@ -3,12 +3,12 @@ use nalgebra as na;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Copy, Default, Debug)]
-pub struct Ftheta6<T: na::RealField + Clone> {
+pub struct Ftheta<T: na::RealField + Clone> {
     pub fx: T,
     pub fy: T,
     pub cx: T,
     pub cy: T,
-    pub k1: T,
+    // pub k1: T, By definition it's always one.
     pub k2: T,
     pub k3: T,
     pub k4: T,
@@ -17,31 +17,31 @@ pub struct Ftheta6<T: na::RealField + Clone> {
     pub width: u32,
     pub height: u32,
 }
-impl<T: na::RealField + Clone> ModelCast<T> for Ftheta6<T> {}
-impl<T: na::RealField + Clone> Ftheta6<T> {
-    pub fn new(params: &na::DVector<T>, width: u32, height: u32) -> Ftheta6<T> {
-        Ftheta6 {
+impl<T: na::RealField + Clone> ModelCast<T> for Ftheta<T> {}
+impl<T: na::RealField + Clone> Ftheta<T> {
+    pub fn new(params: &na::DVector<T>, width: u32, height: u32) -> Ftheta<T> {
+        Ftheta {
             fx: params[0].clone(),
             fy: params[1].clone(),
             cx: params[2].clone(),
             cy: params[3].clone(),
-            k1: params[4].clone(),
-            k2: params[5].clone(),
-            k3: params[6].clone(),
-            k4: params[7].clone(),
-            k5: params[8].clone(),
-            k6: params[9].clone(),
+            // k1: params[4].clone(),
+            k2: params[4].clone(),
+            k3: params[5].clone(),
+            k4: params[6].clone(),
+            k5: params[7].clone(),
+            k6: params[8].clone(),
             width,
             height,
         }
     }
-    pub fn zeros() -> Ftheta6<T> {
-        Ftheta6 {
+    pub fn zeros() -> Ftheta<T> {
+        Ftheta {
             fx: T::zero(),
             fy: T::zero(),
             cx: T::zero(),
             cy: T::zero(),
-            k1: T::one(),
+            // k1: T::one(),
             k2: T::zero(),
             k3: T::zero(),
             k4: T::zero(),
@@ -78,12 +78,12 @@ impl<T: na::RealField + Clone> Ftheta6<T> {
             + T::from_f64(5.0).unwrap() * k5.clone() * theta4.clone()
             + T::from_f64(6.0).unwrap() * k6.clone() * theta5.clone()
     }
-    pub fn from<U: na::RealField + Clone>(m: &Ftheta6<U>) -> Ftheta6<T> {
-        Ftheta6::new(&m.cast(), m.width, m.height)
+    pub fn from<U: na::RealField + Clone>(m: &Ftheta<U>) -> Ftheta<T> {
+        Ftheta::new(&m.cast(), m.width, m.height)
     }
 }
 
-impl<T: na::RealField + Clone> CameraModel<T> for Ftheta6<T> {
+impl<T: na::RealField + Clone> CameraModel<T> for Ftheta<T> {
     fn set_params(&mut self, params: &nalgebra::DVector<T>) {
         if params.shape() != self.params().shape() {
             panic!("params has wrong shape.")
@@ -92,12 +92,12 @@ impl<T: na::RealField + Clone> CameraModel<T> for Ftheta6<T> {
         self.fy = params[1].clone();
         self.cx = params[2].clone();
         self.cy = params[3].clone();
-        self.k1 = params[4].clone();
-        self.k2 = params[5].clone();
-        self.k3 = params[6].clone();
-        self.k4 = params[7].clone();
-        self.k5 = params[8].clone();
-        self.k6 = params[9].clone();
+        // self.k1 = params[4].clone();
+        self.k2 = params[4].clone();
+        self.k3 = params[5].clone();
+        self.k4 = params[6].clone();
+        self.k5 = params[7].clone();
+        self.k6 = params[8].clone();
     }
     fn params(&self) -> nalgebra::DVector<T> {
         na::dvector![
@@ -105,7 +105,7 @@ impl<T: na::RealField + Clone> CameraModel<T> for Ftheta6<T> {
             self.fy.clone(),
             self.cx.clone(),
             self.cy.clone(),
-            self.k1.clone(),
+            // self.k1.clone(),
             self.k2.clone(),
             self.k3.clone(),
             self.k4.clone(),
@@ -134,11 +134,11 @@ impl<T: na::RealField + Clone> CameraModel<T> for Ftheta6<T> {
         let fy = &params[1];
         let cx = &params[2];
         let cy = &params[3];
-        let k2 = &params[5];
-        let k3 = &params[6];
-        let k4 = &params[7];
-        let k5 = &params[8];
-        let k6 = &params[9];
+        let k2 = &params[4];
+        let k3 = &params[5];
+        let k4 = &params[6];
+        let k5 = &params[7];
+        let k6 = &params[8];
 
         let theta_d = Self::f_theta(k2, k3, k4, k5, k6, &theta);
         let d = theta_d / r.clone();
@@ -193,7 +193,7 @@ impl<T: na::RealField + Clone> CameraModel<T> for Ftheta6<T> {
 
     fn distortion_params(&self) -> nalgebra::DVector<T> {
         na::dvector![
-            self.k1.clone(),
+            // self.k1.clone(),
             self.k2.clone(),
             self.k3.clone(),
             self.k4.clone(),
@@ -208,12 +208,12 @@ impl<T: na::RealField + Clone> CameraModel<T> for Ftheta6<T> {
     fn distortion_params_bound(&self) -> Vec<(usize, (f64, f64))> {
         // k1 is always one, other k [-1, 1]
         vec![
-            (4, (1.0, 1.0)),
+            // (4, (1.0, 1.0)),
+            (4, (-1.0, 1.0)),
             (5, (-1.0, 1.0)),
             (6, (-1.0, 1.0)),
             (7, (-1.0, 1.0)),
             (8, (-1.0, 1.0)),
-            (9, (-1.0, 1.0)),
         ]
     }
 }
