@@ -69,7 +69,7 @@ macro_rules! generic_impl_self {
     };
 }
 impl GenericModel<f64> {
-    generic_impl!(init_undistort_map, (na::DMatrix<f32>, na::DMatrix<f32>), projection_mat: &na::Matrix3<f64>, new_w_h: (u32, u32));
+    generic_impl!(init_undistort_map, (na::DMatrix<f32>, na::DMatrix<f32>), projection_mat: &na::Matrix3<f64>, new_w_h: (u32, u32), rotation: Option<na::Rotation3<f64>>);
     generic_impl!(estimate_new_camera_matrix_for_undistort, na::Matrix3<f64>, balance: f64, new_image_w_h: Option<(u32, u32)>);
 }
 

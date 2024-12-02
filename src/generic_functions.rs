@@ -7,6 +7,7 @@ pub fn init_undistort_map(
     camera_model: &dyn CameraModel<f64>,
     projection_mat: &na::Matrix3<f64>,
     new_w_h: (u32, u32),
+    rotation: Option<na::Rotation3<f64>>,
 ) -> (na::DMatrix<f32>, na::DMatrix<f32>) {
     if projection_mat.shape() != (3, 3) {
         panic!("projection matrix has the wrong shape");
@@ -15,12 +16,19 @@ pub fn init_undistort_map(
     let fy = projection_mat[(1, 1)];
     let cx = projection_mat[(0, 2)];
     let cy = projection_mat[(1, 2)];
+    let rmat_inv = rotation
+        .unwrap_or(na::Rotation3::identity())
+        .inverse()
+        .matrix()
+        .to_owned();
     let p3ds: Vec<na::Vector3<f64>> = (0..new_w_h.1)
         .into_par_iter()
         .flat_map(|y| {
             (0..new_w_h.0)
                 .into_par_iter()
-                .map(|x| na::Vector3::new((x as f64 - cx) / fx, (y as f64 - cy) / fy, 1.0))
+                .map(|x| {
+                    rmat_inv * na::Vector3::new((x as f64 - cx) / fx, (y as f64 - cy) / fy, 1.0)
+                })
                 .collect::<Vec<na::Vector3<f64>>>()
         })
         .collect();
