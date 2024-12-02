@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use super::generic::GenericModel;
+use super::generic_model::GenericModel;
 
 pub fn model_to_json(output_path: &str, camera_model: &GenericModel<f64>) {
     let j = serde_json::to_string_pretty(camera_model).unwrap();

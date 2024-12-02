@@ -1,4 +1,4 @@
-use crate::generic::{CameraModel, ModelCast};
+use crate::generic_model::{CameraModel, ModelCast};
 use nalgebra as na;
 use serde::{Deserialize, Serialize};
 

@@ -1,6 +1,6 @@
 [package]
 name = "camera-intrinsic-model"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 authors = ["Powei Lin <poweilin1994@gmail.com>"]
 readme = "README.md"
@@ -21,3 +21,10 @@ serde_json = "1.0.133"
 
 [[example]]
 name = "remap"
+
+[[example]]
+name = "stereo_rectify"
+
+[dev-dependencies]
+imageproc = "0.25.0"
+rand = "0.8.5"
