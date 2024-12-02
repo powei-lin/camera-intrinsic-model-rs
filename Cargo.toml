@@ -1,0 +1,24 @@
+[package]
+name = "camera-intrinsic-model"
+version = "0.1.0"
+edition = "2021"
+authors = ["Powei Lin <poweilin1994@gmail.com>"]
+readme = "README.md"
+license = "Apache-2.0"
+description = "Camera Intrinsic Models"
+homepage = "https://github.com/powei-lin/camera-intrinsic-model-rs"
+repository = "https://github.com/powei-lin/camera-intrinsic-model-rs"
+keywords = ["camera-intrinsic", "intrinsic", "fisheye"]
+categories = ["data-structures", "science", "mathematics", "science::robotics"]
+exclude = ["/.github/*", "*.ipynb", "./scripts/*", "examples/*", "tests/*", "data/*"]
+
+[dependencies]
+image = "0.25.5"
+nalgebra = "0.33.2"
+num-dual = "0.10.3"
+rayon = "1.10.0"
+serde = { version = "1.0.215", features = ["derive"] }
+serde_json = "1.0.133"
+
+[[example]]
+name = "remap"
