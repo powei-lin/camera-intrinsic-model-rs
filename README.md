@@ -1,9 +1,17 @@
-# camera-intrinsic-model-rs
+# camera-intrinsic-model
 [![crate](https://img.shields.io/crates/v/camera-intrinsic-model.svg)](https://crates.io/crates/camera-intrinsic-model)
 
 A pure rust camera intrinsic model library. Including
 * project / unproject points
 * undistort and remap image
+
+### Supported camera models are
+* Extended Unified (EUCM)
+* Extended Unified with Tangential (EUCMT)
+* Unified Camera Model (UCM)
+* Kannala Brandt (KB4) aka OpenCV Fisheye
+* OpenCV (OPENCV5) aka `plumb_bob` in ROS
+
 
 ## Examples
 ```sh
