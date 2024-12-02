@@ -3,7 +3,6 @@ use std::str::FromStr;
 use super::{Ftheta, KannalaBrandt4, OpenCVModel5, EUCM, EUCMT, UCM};
 use image::DynamicImage;
 use nalgebra as na;
-use num_dual::DualDVec64;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -71,32 +70,6 @@ macro_rules! generic_impl_self {
 impl GenericModel<f64> {
     generic_impl!(init_undistort_map, (na::DMatrix<f32>, na::DMatrix<f32>), projection_mat: &na::Matrix3<f64>, new_w_h: (u32, u32));
     generic_impl!(estimate_new_camera_matrix_for_undistort, na::Matrix3<f64>, balance: f64, new_image_w_h: Option<(u32, u32)>);
-    generic_impl_self!(width -> f64);
-    generic_impl_self!(height -> f64);
-    generic_impl_self!(params -> na::DVector<f64>);
-    generic_impl_self!(set_params, params: &na::DVector<f64>);
-    generic_impl_self!(set_w_h, w: u32, h: u32);
-    generic_impl_self!(camera_params -> na::DVector<f64>);
-    generic_impl_self!(distortion_params -> na::DVector<f64>);
-    generic_impl_self!(distortion_params_bound -> Vec<(usize, (f64, f64))>);
-    generic_impl_self!(project_one, na::Vector2<f64>, pt: &na::Vector3<f64>);
-    generic_impl_self!(unproject_one, na::Vector3<f64>, pt: &na::Vector2<f64>);
-    generic_impl_self!(project, Vec<Option<na::Vector2<f64>>>, p3d: &[na::Vector3<f64>]);
-    generic_impl_self!(unproject, Vec<Option<na::Vector3<f64>>>, p2d: &[na::Vector2<f64>]);
-    pub fn cast<T: na::RealField + Clone>(&self) -> GenericModel<T> {
-        match self {
-            GenericModel::EUCM(eucm) => GenericModel::EUCM(EUCM::from(eucm)),
-            GenericModel::UCM(ucm) => GenericModel::UCM(UCM::from(ucm)),
-            GenericModel::OpenCVModel5(open_cvmodel5) => {
-                GenericModel::OpenCVModel5(OpenCVModel5::from(open_cvmodel5))
-            }
-            GenericModel::KannalaBrandt4(kannala_brandt4) => {
-                GenericModel::KannalaBrandt4(KannalaBrandt4::from(kannala_brandt4))
-            }
-            GenericModel::EUCMT(eucmt) => GenericModel::EUCMT(EUCMT::from(eucmt)),
-            GenericModel::Ftheta(ftheta) => GenericModel::Ftheta(Ftheta::from(ftheta)),
-        }
-    }
 }
 
 impl FromStr for GenericModel<f64> {
@@ -115,20 +88,20 @@ impl FromStr for GenericModel<f64> {
     }
 }
 
-impl GenericModel<num_dual::DualDVec64> {
-    // generic_impl!(init_undistort_map, (na::DMatrix<f32>, na::DMatrix<f32>), projection_mat: &na::Matrix3<f64>, new_w_h: (u32, u32));
-    // generic_impl!(estimate_new_camera_matrix_for_undistort, na::Matrix3<f64>, balance: f64, new_image_w_h: Option<(u32, u32)>);
-    // generic_impl_self!(width, f64);
-    // generic_impl_self!(height, f64);
-    generic_impl_self!(params -> na::DVector<DualDVec64>);
-    generic_impl_self!(set_params, params: &na::DVector<DualDVec64>);
-    generic_impl_self!(camera_params -> na::DVector<DualDVec64>);
-    generic_impl_self!(distortion_params -> na::DVector<DualDVec64>);
-    generic_impl_self!(project_one, na::Vector2<DualDVec64>, pt: &na::Vector3<DualDVec64>);
-    generic_impl_self!(unproject_one, na::Vector3<DualDVec64>, pt: &na::Vector2<DualDVec64>);
-    generic_impl_self!(project, Vec<Option<na::Vector2<num_dual::DualDVec64>>>, p3d: &[na::Vector3<num_dual::DualDVec64>]);
-    generic_impl_self!(unproject, Vec<Option<na::Vector3<num_dual::DualDVec64>>>, p2d: &[na::Vector2<num_dual::DualDVec64>]);
-    pub fn cast<T: na::RealField + Clone>(&self) -> GenericModel<T> {
+impl<T: na::RealField + Clone> GenericModel<T> {
+    generic_impl_self!(width -> T);
+    generic_impl_self!(height -> T);
+    generic_impl_self!(params -> na::DVector<T>);
+    generic_impl_self!(set_params, params: &na::DVector<T>);
+    generic_impl_self!(set_w_h, w: u32, h: u32);
+    generic_impl_self!(camera_params -> na::DVector<T>);
+    generic_impl_self!(distortion_params -> na::DVector<T>);
+    generic_impl_self!(distortion_params_bound -> Vec<(usize, (f64, f64))>);
+    generic_impl_self!(project_one, na::Vector2<T>, pt: &na::Vector3<T>);
+    generic_impl_self!(unproject_one, na::Vector3<T>, pt: &na::Vector2<T>);
+    generic_impl_self!(project, Vec<Option<na::Vector2<T>>>, p3d: &[na::Vector3<T>]);
+    generic_impl_self!(unproject, Vec<Option<na::Vector3<T>>>, p2d: &[na::Vector2<T>]);
+    pub fn cast<U: na::RealField + Clone>(&self) -> GenericModel<U> {
         match self {
             GenericModel::EUCM(eucm) => GenericModel::EUCM(EUCM::from(eucm)),
             GenericModel::UCM(ucm) => GenericModel::UCM(UCM::from(ucm)),
@@ -140,6 +113,20 @@ impl GenericModel<num_dual::DualDVec64> {
             }
             GenericModel::EUCMT(eucmt) => GenericModel::EUCMT(EUCMT::from(eucmt)),
             GenericModel::Ftheta(ftheta) => GenericModel::Ftheta(Ftheta::from(ftheta)),
+        }
+    }
+    pub fn new_from_params(&self, params: &na::DVector<T>) -> GenericModel<T> {
+        match self {
+            GenericModel::EUCM(m) => GenericModel::EUCM(EUCM::new(params, m.width, m.height)),
+            GenericModel::UCM(m) => GenericModel::UCM(UCM::new(params, m.width, m.height)),
+            GenericModel::OpenCVModel5(m) => {
+                GenericModel::OpenCVModel5(OpenCVModel5::new(params, m.width, m.height))
+            }
+            GenericModel::KannalaBrandt4(m) => {
+                GenericModel::KannalaBrandt4(KannalaBrandt4::new(params, m.width, m.height))
+            }
+            GenericModel::EUCMT(m) => GenericModel::EUCMT(EUCMT::new(params, m.width, m.height)),
+            GenericModel::Ftheta(m) => GenericModel::Ftheta(Ftheta::new(params, m.width, m.height)),
         }
     }
 }
