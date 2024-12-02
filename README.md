@@ -23,3 +23,4 @@ Papers:
 
 ## TODO
 * [ ] Stereo Rectify
+* [ ] FTheta Model
