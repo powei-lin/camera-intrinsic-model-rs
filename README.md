@@ -28,7 +28,6 @@ cargo run -r --example stereo_rectify
 Links:
 * https://cvg.cit.tum.de/data/datasets/visual-inertial-dataset
 * https://gitlab.com/VladyslavUsenko/basalt-headers
-* https://github.com/itt-ustutt/num-dual
 
 Papers:
 
