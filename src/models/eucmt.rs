@@ -183,7 +183,7 @@ impl<T: na::RealField + Clone> CameraModel<T> for EUCMT<T> {
         // alpha [0, 1], beta > 0
         vec![
             (4, (0.0, 1.0)),
-            (5, (0.0, f64::MAX)),
+            (5, (0.0, 100.0)),
             (6, (-1e2, 1e2)),
             (7, (-1e2, 1e2)),
         ]
