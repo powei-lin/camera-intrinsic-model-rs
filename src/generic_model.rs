@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use super::generic_functions::*;
-use super::{Ftheta, KannalaBrandt4, OpenCVModel5, EUCM, EUCMT, UCM};
+use super::{FovCamera, Ftheta, KannalaBrandt4, OpenCVModel5, EUCM, EUCMT, UCM};
 use image::DynamicImage;
 use nalgebra as na;
 use rayon::prelude::*;
@@ -15,6 +15,7 @@ pub enum GenericModel<T: na::RealField> {
     KannalaBrandt4(KannalaBrandt4<T>),
     EUCMT(EUCMT<T>),
     Ftheta(Ftheta<T>),
+    FovCamera(FovCamera<T>),
 }
 macro_rules! generic_impl {
     ($fn_name:tt, $out:ty, $($v:tt: $t:ty),+) => {
@@ -26,6 +27,7 @@ macro_rules! generic_impl {
                 GenericModel::KannalaBrandt4(kannala_brandt4) => $fn_name(kannala_brandt4, $($v),+),
                 GenericModel::EUCMT(eucmt) => $fn_name(eucmt, $($v),+),
                 GenericModel::Ftheta(ftheta) => $fn_name(ftheta, $($v),+),
+                GenericModel::FovCamera(fov_camera) => $fn_name(fov_camera, $($v),+),
             }
         }
     };
@@ -40,6 +42,7 @@ macro_rules! generic_impl_self {
                 GenericModel::KannalaBrandt4(kannala_brandt4) => kannala_brandt4.$fn_name(),
                 GenericModel::EUCMT(eucmt) => eucmt.$fn_name(),
                 GenericModel::Ftheta(ftheta) => ftheta.$fn_name(),
+                GenericModel::FovCamera(fov_camera) => fov_camera.$fn_name(),
             }
         }
     };
@@ -52,6 +55,7 @@ macro_rules! generic_impl_self {
                 GenericModel::KannalaBrandt4(kannala_brandt4) => kannala_brandt4.$fn_name($($v),+),
                 GenericModel::EUCMT(eucmt) => eucmt.$fn_name($($v),+),
                 GenericModel::Ftheta(ftheta) => ftheta.$fn_name($($v),+),
+                GenericModel::FovCamera(fov_camera) => fov_camera.$fn_name($($v),+),
             }
         }
     };
@@ -64,6 +68,7 @@ macro_rules! generic_impl_self {
                 GenericModel::KannalaBrandt4(kannala_brandt4) => kannala_brandt4.$fn_name($($v),+),
                 GenericModel::EUCMT(eucmt) => eucmt.$fn_name($($v),+),
                 GenericModel::Ftheta(ftheta) => ftheta.$fn_name($($v),+),
+                GenericModel::FovCamera(fov_camera) => fov_camera.$fn_name($($v),+),
             }
         }
     };
@@ -84,6 +89,7 @@ impl FromStr for GenericModel<f64> {
             "opencv5" | "OPENCV5" => Ok(GenericModel::OpenCVModel5(OpenCVModel5::zeros())),
             "eucmt" | "EUCMT" => Ok(GenericModel::EUCMT(EUCMT::zeros())),
             "ftheta" | "FTHETA" => Ok(GenericModel::Ftheta(Ftheta::zeros())),
+            "fov_camera" | "FOV_CAMERA" => Ok(GenericModel::FovCamera(FovCamera::zeros())),
             _ => Err(std::fmt::Error),
         }
     }
@@ -114,6 +120,9 @@ impl<T: na::RealField + Clone> GenericModel<T> {
             }
             GenericModel::EUCMT(eucmt) => GenericModel::EUCMT(EUCMT::from(eucmt)),
             GenericModel::Ftheta(ftheta) => GenericModel::Ftheta(Ftheta::from(ftheta)),
+            GenericModel::FovCamera(fov_camera) => {
+                GenericModel::FovCamera(FovCamera::from(fov_camera))
+            }
         }
     }
     pub fn new_from_params(&self, params: &na::DVector<T>) -> GenericModel<T> {
@@ -128,6 +137,9 @@ impl<T: na::RealField + Clone> GenericModel<T> {
             }
             GenericModel::EUCMT(m) => GenericModel::EUCMT(EUCMT::new(params, m.width, m.height)),
             GenericModel::Ftheta(m) => GenericModel::Ftheta(Ftheta::new(params, m.width, m.height)),
+            GenericModel::FovCamera(m) => {
+                GenericModel::FovCamera(FovCamera::new(params, m.width, m.height))
+            }
         }
     }
 }
