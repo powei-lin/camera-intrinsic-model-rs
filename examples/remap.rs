@@ -20,7 +20,7 @@ fn main() {
     model_to_json("eucm.json", &GenericModel::EUCM(model0));
     let model1 = model_from_json("data/eucm0.json");
     let new_w_h = 1024;
-    let p = model1.estimate_new_camera_matrix_for_undistort(1.0, Some((new_w_h, new_w_h)));
+    let p = model1.estimate_new_camera_matrix_for_undistort(0.0, Some((new_w_h, new_w_h)));
     let (xmap, ymap) = model1.init_undistort_map(&p, (new_w_h, new_w_h), None);
     let remaped = remap(&img, &xmap, &ymap);
     remaped.save("remaped.png").unwrap()

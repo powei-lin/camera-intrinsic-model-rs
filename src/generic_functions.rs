@@ -3,6 +3,25 @@ use super::generic_model::*;
 use nalgebra as na;
 use rayon::prelude::*;
 
+/// Returns xmap and ymap for remaping
+///
+/// # Arguments
+///
+/// * `camera_model` - any camera model
+/// * `projection_mat` - new camera matrix for the undistorted image
+/// * `new_w_h` - new image width and height for the undistorted image
+/// * `rotation` - Optional rotation, normally for stereo rectify
+///
+/// # Examples
+///
+/// ```
+/// use camera_intrinsic_model::*;
+/// let model = model_from_json("eucm.json");
+/// let new_w_h = 1024;
+/// let p = model.estimate_new_camera_matrix_for_undistort(0.0, Some((new_w_h, new_w_h)));
+/// let (xmap, ymap) = model.init_undistort_map(&p, (new_w_h, new_w_h), None);
+/// // let remaped = remap(&img, &xmap, &ymap);
+/// ```
 pub fn init_undistort_map(
     camera_model: &dyn CameraModel<f64>,
     projection_mat: &na::Matrix3<f64>,
@@ -48,6 +67,23 @@ pub fn init_undistort_map(
     (xmap, ymap)
 }
 
+/// Returns xmap and ymap for remaping
+///
+/// # Arguments
+///
+/// * `camera_model` - any camera model
+/// * `balance` - [0-1] zero means no black margin
+/// * `new_image_w_h` - optional new image width and height, default using the original w, h
+///
+/// # Examples
+///
+/// ```
+/// use camera_intrinsic_model::*;
+/// let model = model_from_json("eucm.json");
+/// let new_w_h = 1024;
+/// let p = model.estimate_new_camera_matrix_for_undistort(0.0, Some((new_w_h, new_w_h)));
+/// let (xmap, ymap) = model.init_undistort_map(&p, (new_w_h, new_w_h), None);
+/// ```
 pub fn estimate_new_camera_matrix_for_undistort(
     camera_model: &dyn CameraModel<f64>,
     balance: f64,
@@ -102,6 +138,41 @@ pub fn estimate_new_camera_matrix_for_undistort(
     out
 }
 
+/// Returns xmap and ymap for remaping
+///
+/// # Arguments
+///
+/// * `camera_model` - any camera model
+/// * `balance` - [0-1] zero means no black margin
+/// * `new_image_w_h` - optional new image width and height, default using the original w, h
+///
+/// # Examples
+///
+/// ```
+/// use camera_intrinsic_model::*;
+/// use nalgebra as na;
+/// let model0 = model_from_json("data/eucm0.json");
+/// let model1 = model_from_json("data/eucm1.json");
+/// let tvec = na::Vector3::new(
+///     -0.10098947190325333,
+///     -0.0020811599784744455,
+///     -0.0012888359197775197,
+/// );
+/// let quat = na::Quaternion::new(
+///     0.9997158799903332,
+///     0.02382966001551074,
+///     -0.00032454324393309654,
+///     0.00044863167728445325,
+/// );
+/// let rvec = na::UnitQuaternion::from_quaternion(quat).scaled_axis();
+/// let (r0, r1, p) = stereo_rectify(&model0, &model1, &rvec, &tvec, None);
+/// let image_w_h = (
+///     model0.width().round() as u32,
+///     model0.height().round() as u32,
+/// );
+/// let (xmap0, ymap0) = model0.init_undistort_map(&p, image_w_h, Some(r0));
+/// let (xmap1, ymap1) = model1.init_undistort_map(&p, image_w_h, Some(r1));
+/// ```
 pub fn stereo_rectify(
     camera_model0: &GenericModel<f64>,
     camera_model1: &GenericModel<f64>,
