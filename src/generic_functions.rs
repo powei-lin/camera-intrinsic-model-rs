@@ -16,7 +16,7 @@ use rayon::prelude::*;
 ///
 /// ```
 /// use camera_intrinsic_model::*;
-/// let model = model_from_json("eucm.json");
+/// let model = model_from_json("data/eucm0.json");
 /// let new_w_h = 1024;
 /// let p = model.estimate_new_camera_matrix_for_undistort(0.0, Some((new_w_h, new_w_h)));
 /// let (xmap, ymap) = model.init_undistort_map(&p, (new_w_h, new_w_h), None);
@@ -79,7 +79,7 @@ pub fn init_undistort_map(
 ///
 /// ```
 /// use camera_intrinsic_model::*;
-/// let model = model_from_json("eucm.json");
+/// let model = model_from_json("data/eucm0.json");
 /// let new_w_h = 1024;
 /// let p = model.estimate_new_camera_matrix_for_undistort(0.0, Some((new_w_h, new_w_h)));
 /// let (xmap, ymap) = model.init_undistort_map(&p, (new_w_h, new_w_h), None);
