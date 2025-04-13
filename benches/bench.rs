@@ -1,4 +1,4 @@
-use camera_intrinsic_model::{compute_fast_for_fast_remap, fast_remap, model_from_json, remap};
+use camera_intrinsic_model::{compute_for_fast_remap, fast_remap, model_from_json, remap};
 use diol::prelude::*;
 use image::{DynamicImage, ImageReader};
 
@@ -35,7 +35,7 @@ fn bench_remap_fast(bencher: Bencher, _dummy: bool) {
     let p = model1.estimate_new_camera_matrix_for_undistort(0.0, Some((new_w_h, new_w_h)));
     let (xmap, ymap) = model1.init_undistort_map(&p, (new_w_h, new_w_h), None);
     let img_l8 = DynamicImage::ImageLuma8(img.to_luma8());
-    let xy_pos_weight = compute_fast_for_fast_remap(&xmap, &ymap);
+    let xy_pos_weight = compute_for_fast_remap(&xmap, &ymap);
     bencher.bench(|| {
         let remaped1 = fast_remap(&img_l8, (new_w_h, new_w_h), &xy_pos_weight);
     });

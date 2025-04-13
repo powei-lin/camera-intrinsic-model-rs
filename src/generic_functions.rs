@@ -83,7 +83,7 @@ fn interpolate_bilinear_weight(x: f32, y: f32) -> (u32, u32) {
     (x_weight, y_weight)
 }
 
-pub fn compute_fast_for_fast_remap(
+pub fn compute_for_fast_remap(
     xmap: &na::DMatrix<f32>,
     ymap: &na::DMatrix<f32>,
 ) -> Vec<(u32, u32, u32, u32)> {
