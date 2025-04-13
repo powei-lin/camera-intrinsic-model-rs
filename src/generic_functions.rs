@@ -1,6 +1,6 @@
 use super::generic_model::*;
 
-use image::{DynamicImage, GenericImageView, GrayImage};
+use image::{DynamicImage, GenericImageView, GrayImage, ImageBuffer};
 use nalgebra as na;
 use rayon::prelude::*;
 
@@ -100,6 +100,14 @@ pub fn compute_for_fast_remap(
     xy_pos_weight_vec
 }
 
+fn reinterpret_vec(input: Vec<[u8; 3]>) -> Vec<u8> {
+    let len = input.len() * 3;
+    let capacity = input.capacity() * 3;
+    let ptr = input.as_ptr() as *mut u8;
+    std::mem::forget(input); // prevent dropping original vec
+    unsafe { Vec::from_raw_parts(ptr, len, capacity) }
+}
+
 pub fn fast_remap(
     img: &DynamicImage,
     new_w_h: (u32, u32),
@@ -126,15 +134,52 @@ pub fn fast_remap(
             let img = GrayImage::from_vec(new_w_h.0, new_w_h.1, val).unwrap();
             DynamicImage::ImageLuma8(img)
         }
-        DynamicImage::ImageLumaA8(image_buffer) => todo!(),
-        DynamicImage::ImageRgb8(image_buffer) => todo!(),
-        DynamicImage::ImageRgba8(image_buffer) => todo!(),
-        DynamicImage::ImageLuma16(image_buffer) => todo!(),
-        DynamicImage::ImageLumaA16(image_buffer) => todo!(),
-        DynamicImage::ImageRgb16(image_buffer) => todo!(),
-        DynamicImage::ImageRgba16(image_buffer) => todo!(),
-        DynamicImage::ImageRgb32F(image_buffer) => todo!(),
-        DynamicImage::ImageRgba32F(image_buffer) => todo!(),
+        DynamicImage::ImageRgb8(image_buffer) => {
+            let val: Vec<[u8; 3]> = xy_pos_weight_vec
+                .par_iter()
+                .map(|&(x0, y0, xw0, yw0)| {
+                    let p00 = unsafe { image_buffer.unsafe_get_pixel(x0, y0) };
+                    let p10 = unsafe { image_buffer.unsafe_get_pixel(x0 + 1, y0) };
+                    let p01 = unsafe { image_buffer.unsafe_get_pixel(x0, y0 + 1) };
+                    let p11 = unsafe { image_buffer.unsafe_get_pixel(x0 + 1, y0 + 1) };
+                    let mut v = [0, 1, 2];
+                    v.iter_mut().for_each(|i| {
+                        let xw1 = 255 - xw0;
+                        let yw1 = 255 - yw0;
+                        let c = *i as usize;
+                        const UPPER_UPPER: u32 = 255 * 255;
+                        *i = ((p00.0[c] as u32 * xw0 * yw0
+                            + p10.0[c] as u32 * xw1 * yw0
+                            + p01.0[c] as u32 * xw0 * yw1
+                            + p11.0[c] as u32 * xw1 * yw1)
+                            / UPPER_UPPER) as u8;
+                    });
+                    v
+                })
+                .collect();
+            let img = ImageBuffer::from_vec(new_w_h.0, new_w_h.1, reinterpret_vec(val)).unwrap();
+            DynamicImage::ImageRgb8(img)
+        }
+        DynamicImage::ImageLuma16(image_buffer) => {
+            let val: Vec<u16> = xy_pos_weight_vec
+                .par_iter()
+                .map(|&(x0, y0, xw0, yw0)| {
+                    let p00 = unsafe { image_buffer.unsafe_get_pixel(x0, y0)[0] as u32 };
+                    let p10 = unsafe { image_buffer.unsafe_get_pixel(x0 + 1, y0)[0] as u32 };
+                    let p01 = unsafe { image_buffer.unsafe_get_pixel(x0, y0 + 1)[0] as u32 };
+                    let p11 = unsafe { image_buffer.unsafe_get_pixel(x0 + 1, y0 + 1)[0] as u32 };
+                    let xw1 = 255 - xw0;
+                    let yw1 = 255 - yw0;
+                    const UPPER_UPPER: u32 = 255 * 255;
+                    let p =
+                        ((p00 * xw0 * yw0 + p10 * xw1 * yw0 + p01 * xw0 * yw1 + p11 * xw1 * yw1)
+                            / UPPER_UPPER) as u16;
+                    p
+                })
+                .collect();
+            let img = ImageBuffer::from_vec(new_w_h.0, new_w_h.1, val).unwrap();
+            DynamicImage::ImageLuma16(img)
+        }
         _ => todo!(),
     };
     remaped
