@@ -1,19 +1,18 @@
-
+use camera_intrinsic_model::model_from_json;
 use diol::prelude::*;
 
 fn main() -> eyre::Result<()> {
     let bench = Bench::from_args()?;
-    bench.register("slicex2", slice_times_two, [4, 8, 16, 128, 256, 1024]);
+    bench.register("remap", bench_remap, [true]);
     bench.run()?;
     Ok(())
 }
 
-fn slice_times_two(bencher: Bencher, len: usize) {
-    let mut v = vec![0.0_f64; len];
+fn bench_remap(bencher: Bencher, _dummy: bool) {
+    let model1 = model_from_json("data/eucm0.json");
+    let new_w_h = 1024;
+    let p = model1.estimate_new_camera_matrix_for_undistort(0.0, Some((new_w_h, new_w_h)));
     bencher.bench(|| {
-        for x in &mut v {
-            *x *= 2.0;
-        }
-        black_box(&mut v);
+        let (xmap, ymap) = model1.init_undistort_map(&p, (new_w_h, new_w_h), None);
     });
 }

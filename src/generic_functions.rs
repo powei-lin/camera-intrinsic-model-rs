@@ -44,7 +44,7 @@ pub fn init_undistort_map(
         .into_par_iter()
         .flat_map(|y| {
             (0..new_w_h.0)
-                .into_par_iter()
+                .into_iter()
                 .map(|x| {
                     rmat_inv * na::Vector3::new((x as f64 - cx) / fx, (y as f64 - cy) / fy, 1.0)
                 })
@@ -53,7 +53,7 @@ pub fn init_undistort_map(
         .collect();
     let p2ds = camera_model.project(&p3ds);
     let (xvec, yvec): (Vec<f32>, Vec<f32>) = p2ds
-        .par_iter()
+        .iter()
         .map(|xy| {
             if let Some(xy) = xy {
                 (xy[0] as f32, xy[1] as f32)
