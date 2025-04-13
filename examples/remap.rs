@@ -25,6 +25,7 @@ fn main() {
     let img_l8 = DynamicImage::ImageLuma8(img.to_luma8());
     let remaped = remap(&img_l8, &xmap, &ymap);
     remaped.save("remaped0.png").unwrap();
+
     let xy_pos_weight = compute_for_fast_remap(&xmap, &ymap);
     let remaped1 = fast_remap(&img_l8, (new_w_h, new_w_h), &xy_pos_weight);
     remaped1.save("remaped1.png").unwrap();
