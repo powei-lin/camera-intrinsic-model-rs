@@ -1,5 +1,5 @@
 use camera_intrinsic_model::*;
-use image::ImageReader;
+use image::{DynamicImage, ImageReader};
 use nalgebra as na;
 
 fn main() {
@@ -22,6 +22,15 @@ fn main() {
     let new_w_h = 1024;
     let p = model1.estimate_new_camera_matrix_for_undistort(0.0, Some((new_w_h, new_w_h)));
     let (xmap, ymap) = model1.init_undistort_map(&p, (new_w_h, new_w_h), None);
-    let remaped = remap(&img, &xmap, &ymap);
-    remaped.save("remaped.png").unwrap()
+    let img_l8 = DynamicImage::ImageLuma8(img.to_luma8());
+    let remaped = remap(&img_l8, &xmap, &ymap);
+    remaped.save("remaped0.png").unwrap();
+
+    let xy_pos_weight = compute_for_fast_remap(&xmap, &ymap);
+    let remaped1 = fast_remap(&img_l8, (new_w_h, new_w_h), &xy_pos_weight);
+    remaped1.save("remaped1.png").unwrap();
+
+    let img_rgb8 = DynamicImage::ImageRgb8(img.to_rgb8());
+    let remaped1 = fast_remap(&img_rgb8, (new_w_h, new_w_h), &xy_pos_weight);
+    remaped1.save("remaped2.png").unwrap();
 }

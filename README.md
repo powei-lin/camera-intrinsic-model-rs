@@ -25,6 +25,21 @@ cargo run -r --example remap
 cargo run -r --example stereo_rectify
 ```
 
+## Benchmark
+Remapping to 1024x1024 on m4 mac mini.
+```
+╭───────────────────────────────────────────────────────────────────────╮
+│                                 remap                                 │
+├────────────────┬──────┬───────────┬───────────┬───────────┬───────────┤
+│ benchmark      │ args │   fastest │    median │      mean │    stddev │
+├────────────────┼──────┼───────────┼───────────┼───────────┼───────────┤
+│ mono8 normal   │ None │ 732.17 µs │ 827.00 µs │ 858.60 µs │  94.88 µs │
+│ mono8 fast     │ None │ 272.00 µs │ 342.25 µs │ 360.68 µs │ 228.13 µs │
+│ rgb8 normal    │ None │   1.87 ms │   2.00 ms │   2.04 ms │ 143.60 µs │
+│ rgb8 fast      │ None │ 751.67 µs │ 824.54 µs │ 851.30 µs │  79.45 µs │
+╰────────────────┴──────┴───────────┴───────────┴───────────┴───────────╯
+```
+
 ## Acknowledgements
 Links:
 * https://cvg.cit.tum.de/data/datasets/visual-inertial-dataset
