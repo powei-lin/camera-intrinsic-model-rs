@@ -74,7 +74,7 @@ fn interpolate_bilinear_weight(x: f32, y: f32) -> (u32, u32) {
         panic!("x not in [0-65535]");
     }
     if y < 0.0 || y > 65535.0 {
-        panic!("x not in [0-65535]");
+        panic!("y not in [0-65535]");
     }
     const UPPER: f32 = u8::MAX as f32;
     let x_weight = (UPPER * (x.ceil() - x)) as u32;
