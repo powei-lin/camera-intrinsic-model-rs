@@ -1,5 +1,6 @@
 use super::generic_model::*;
 
+use image::{DynamicImage, GenericImageView, GrayImage};
 use nalgebra as na;
 use rayon::prelude::*;
 
@@ -65,6 +66,78 @@ pub fn init_undistort_map(
     let xmap = na::DMatrix::from_vec(new_w_h.1 as usize, new_w_h.0 as usize, xvec);
     let ymap = na::DMatrix::from_vec(new_w_h.1 as usize, new_w_h.0 as usize, yvec);
     (xmap, ymap)
+}
+
+#[inline]
+fn interpolate_bilinear_weight(x: f32, y: f32) -> (u32, u32) {
+    if x < 0.0 || x > 65535.0 {
+        panic!("x not in [0-65535]");
+    }
+    if y < 0.0 || y > 65535.0 {
+        panic!("x not in [0-65535]");
+    }
+    const UPPER: f32 = u8::MAX as f32;
+    let x_weight = (UPPER * (x.ceil() - x)) as u32;
+    let y_weight = (UPPER * (y.ceil() - y)) as u32;
+    // 0-255
+    (x_weight, y_weight)
+}
+
+pub fn compute_fast_for_fast_remap(
+    xmap: &na::DMatrix<f32>,
+    ymap: &na::DMatrix<f32>,
+) -> Vec<(u32, u32, u32, u32)> {
+    let xy_pos_weight_vec: Vec<_> = xmap
+        .iter()
+        .zip(ymap.iter())
+        .map(|(&x, &y)| {
+            let (xw, yw) = interpolate_bilinear_weight(x, y);
+            let x0 = x.floor() as u32;
+            let y0 = y.floor() as u32;
+            (x0, y0, xw, yw)
+        })
+        .collect();
+    xy_pos_weight_vec
+}
+
+pub fn fast_remap(
+    img: &DynamicImage,
+    new_w_h: (u32, u32),
+    xy_pos_weight_vec: &[(u32, u32, u32, u32)],
+) -> DynamicImage {
+    let remaped = match img {
+        DynamicImage::ImageLuma8(image_buffer) => {
+            let val: Vec<u8> = xy_pos_weight_vec
+                .par_iter()
+                .map(|&(x0, y0, xw0, yw0)| {
+                    let p00 = unsafe { image_buffer.unsafe_get_pixel(x0, y0)[0] as u32 };
+                    let p10 = unsafe { image_buffer.unsafe_get_pixel(x0 + 1, y0)[0] as u32 };
+                    let p01 = unsafe { image_buffer.unsafe_get_pixel(x0, y0 + 1)[0] as u32 };
+                    let p11 = unsafe { image_buffer.unsafe_get_pixel(x0 + 1, y0 + 1)[0] as u32 };
+                    let xw1 = 255 - xw0;
+                    let yw1 = 255 - yw0;
+                    const UPPER_UPPER: u32 = 255 * 255;
+                    let p =
+                        ((p00 * xw0 * yw0 + p10 * xw1 * yw0 + p01 * xw0 * yw1 + p11 * xw1 * yw1)
+                            / UPPER_UPPER) as u8;
+                    p
+                })
+                .collect();
+            let img = GrayImage::from_vec(new_w_h.0, new_w_h.1, val).unwrap();
+            DynamicImage::ImageLuma8(img)
+        }
+        DynamicImage::ImageLumaA8(image_buffer) => todo!(),
+        DynamicImage::ImageRgb8(image_buffer) => todo!(),
+        DynamicImage::ImageRgba8(image_buffer) => todo!(),
+        DynamicImage::ImageLuma16(image_buffer) => todo!(),
+        DynamicImage::ImageLumaA16(image_buffer) => todo!(),
+        DynamicImage::ImageRgb16(image_buffer) => todo!(),
+        DynamicImage::ImageRgba16(image_buffer) => todo!(),
+        DynamicImage::ImageRgb32F(image_buffer) => todo!(),
+        DynamicImage::ImageRgba32F(image_buffer) => todo!(),
+        _ => todo!(),
+    };
+    remaped
 }
 
 /// Returns xmap and ymap for remaping
