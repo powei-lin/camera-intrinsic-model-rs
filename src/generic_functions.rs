@@ -180,7 +180,7 @@ pub fn fast_remap(
             let img = ImageBuffer::from_vec(new_w_h.0, new_w_h.1, val).unwrap();
             DynamicImage::ImageLuma16(img)
         }
-        _ => todo!(),
+        _ => panic!("Only mono8, mono16, and rgb8 support fast remap."),
     };
     remaped
 }
