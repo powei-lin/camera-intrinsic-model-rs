@@ -12,13 +12,13 @@ fn main() -> eyre::Result<()> {
             bench_remap_rgb.with_name("rgb8 normal"),
             bench_remap_fast_rgb.with_name("rgb8 fast"),
         ],
-        [true],
+        [None],
     );
     bench.run()?;
     Ok(())
 }
 
-fn bench_remap(bencher: Bencher, _dummy: bool) {
+fn bench_remap(bencher: Bencher, _dummy: Option<bool>) {
     let model1 = model_from_json("data/eucm0.json");
     let new_w_h = 1024;
     let img = ImageReader::open("data/tum_vi_with_chart.png")
@@ -33,7 +33,7 @@ fn bench_remap(bencher: Bencher, _dummy: bool) {
     });
 }
 
-fn bench_remap_rgb(bencher: Bencher, _dummy: bool) {
+fn bench_remap_rgb(bencher: Bencher, _dummy: Option<bool>) {
     let model1 = model_from_json("data/eucm0.json");
     let new_w_h = 1024;
     let img = ImageReader::open("data/tum_vi_with_chart.png")
@@ -48,7 +48,7 @@ fn bench_remap_rgb(bencher: Bencher, _dummy: bool) {
     });
 }
 
-fn bench_remap_fast(bencher: Bencher, _dummy: bool) {
+fn bench_remap_fast(bencher: Bencher, _dummy: Option<bool>) {
     let model1 = model_from_json("data/eucm0.json");
     let new_w_h = 1024;
     let img = ImageReader::open("data/tum_vi_with_chart.png")
@@ -64,7 +64,7 @@ fn bench_remap_fast(bencher: Bencher, _dummy: bool) {
     });
 }
 
-fn bench_remap_fast_rgb(bencher: Bencher, _dummy: bool) {
+fn bench_remap_fast_rgb(bencher: Bencher, _dummy: Option<bool>) {
     let model1 = model_from_json("data/eucm0.json");
     let new_w_h = 1024;
     let img = ImageReader::open("data/tum_vi_with_chart.png")
