@@ -25,6 +25,11 @@ name = "remap"
 [[example]]
 name = "stereo_rectify"
 
+[[bench]]
+name = "bench"
+harness = false
+
 [dev-dependencies]
+diol = "0.13.0"
 imageproc = "0.25.0"
 rand = "0.9.0"
