@@ -45,7 +45,6 @@ pub fn init_undistort_map(
         .into_par_iter()
         .flat_map(|y| {
             (0..new_w_h.0)
-                .into_iter()
                 .map(|x| {
                     rmat_inv * na::Vector3::new((x as f64 - cx) / fx, (y as f64 - cy) / fy, 1.0)
                 })
@@ -70,10 +69,10 @@ pub fn init_undistort_map(
 
 #[inline]
 fn interpolate_bilinear_weight(x: f32, y: f32) -> (u32, u32) {
-    if x < 0.0 || x > 65535.0 {
+    if !(0.0..=65535.0).contains(&x) {
         panic!("x not in [0-65535]");
     }
-    if y < 0.0 || y > 65535.0 {
+    if !(0.0..=65535.0).contains(&y) {
         panic!("y not in [0-65535]");
     }
     const UPPER: f32 = u8::MAX as f32;
@@ -125,10 +124,8 @@ pub fn fast_remap(
                     let xw1 = 255 - xw0;
                     let yw1 = 255 - yw0;
                     const UPPER_UPPER: u32 = 255 * 255;
-                    let p =
-                        ((p00 * xw0 * yw0 + p10 * xw1 * yw0 + p01 * xw0 * yw1 + p11 * xw1 * yw1)
-                            / UPPER_UPPER) as u8;
-                    p
+                    ((p00 * xw0 * yw0 + p10 * xw1 * yw0 + p01 * xw0 * yw1 + p11 * xw1 * yw1)
+                        / UPPER_UPPER) as u8
                 })
                 .collect();
             let img = GrayImage::from_vec(new_w_h.0, new_w_h.1, val).unwrap();
@@ -171,10 +168,8 @@ pub fn fast_remap(
                     let xw1 = 255 - xw0;
                     let yw1 = 255 - yw0;
                     const UPPER_UPPER: u32 = 255 * 255;
-                    let p =
-                        ((p00 * xw0 * yw0 + p10 * xw1 * yw0 + p01 * xw0 * yw1 + p11 * xw1 * yw1)
-                            / UPPER_UPPER) as u16;
-                    p
+                    ((p00 * xw0 * yw0 + p10 * xw1 * yw0 + p01 * xw0 * yw1 + p11 * xw1 * yw1)
+                        / UPPER_UPPER) as u16
                 })
                 .collect();
             let img = ImageBuffer::from_vec(new_w_h.0, new_w_h.1, val).unwrap();
