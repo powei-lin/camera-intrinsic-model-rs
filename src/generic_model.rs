@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use super::generic_functions::*;
-use super::{FovCamera, Ftheta, KannalaBrandt4, OpenCVModel5, EUCM, EUCMT, UCM};
+use super::{EUCM, EUCMT, FovCamera, Ftheta, KannalaBrandt4, OpenCVModel5, UCM};
 use image::DynamicImage;
 use nalgebra as na;
 use rayon::prelude::*;

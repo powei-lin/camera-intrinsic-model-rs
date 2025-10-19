@@ -1,7 +1,7 @@
 [package]
 name = "camera-intrinsic-model"
-version = "0.5.0"
-edition = "2021"
+version = "0.6.0"
+edition = "2024"
 authors = ["Powei Lin <poweilin1994@gmail.com>"]
 readme = "README.md"
 license = "Apache-2.0"
@@ -10,15 +10,22 @@ homepage = "https://github.com/powei-lin/camera-intrinsic-model-rs"
 repository = "https://github.com/powei-lin/camera-intrinsic-model-rs"
 keywords = ["camera-intrinsic", "intrinsic", "fisheye"]
 categories = ["data-structures", "science", "mathematics", "science::robotics"]
-exclude = ["/.github/*", "*.ipynb", "./scripts/*", "examples/*", "tests/*", "data/*", "benches/*"]
+exclude = [
+    "/.github/*",
+    "*.ipynb",
+    "./scripts/*",
+    "examples/*",
+    "tests/*",
+    "data/*",
+    "benches/*",
+]
 
 [dependencies]
-image = "0.25.6"
-nalgebra = "0.33.2"
-pulp = { version = "0.21.5", features = ["macro"] }
+image = { version = "0.25.8", default-features = false, features = ["rayon"] }
+nalgebra = "0.34.1"
 rayon = "1.10.0"
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 
 [[example]]
 name = "remap"
@@ -36,4 +43,4 @@ harness = false
 [dev-dependencies]
 diol = "0.13.0"
 imageproc = "0.25.0"
-rand = "0.9.0"
+rand = "0.9"

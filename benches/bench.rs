@@ -33,8 +33,8 @@ fn main() -> eyre::Result<()> {
     Ok(())
 }
 
-#[inline(always)]
-fn bench_eucm_simd_impl(
+// #[target_feature(enable = "neon")]
+unsafe fn bench_eucm_simd_impl(
     params: &na::DVector<f32>,
     p3ds: &[na::Vector3<f32>],
 ) -> Vec<na::Vector2<f32>> {
@@ -97,7 +97,7 @@ fn bench_eucm_simd(bencher: Bencher, _dummy: Option<bool>) {
     let params = model1.params().cast::<f32>();
     let p3ds = vec![na::Vector3::new(0.5, 0.5, 2.0); 3856 * 176];
     bencher.bench(|| {
-        let _p2ds = bench_eucm_simd_impl(&params, &p3ds);
+        let _p2ds = unsafe { bench_eucm_simd_impl(&params, &p3ds) };
         // std::hint::black_box(p2ds);
     });
 }
