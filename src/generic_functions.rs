@@ -112,7 +112,7 @@ pub fn fast_remap(
     new_w_h: (u32, u32),
     xy_pos_weight_vec: &[(u32, u32, u32, u32)],
 ) -> DynamicImage {
-    let remaped = match img {
+    match img {
         DynamicImage::ImageLuma8(image_buffer) => {
             let val: Vec<u8> = xy_pos_weight_vec
                 .par_iter()
@@ -176,8 +176,7 @@ pub fn fast_remap(
             DynamicImage::ImageLuma16(img)
         }
         _ => panic!("Only mono8, mono16, and rgb8 support fast remap."),
-    };
-    remaped
+    }
 }
 
 /// Returns xmap and ymap for remaping
