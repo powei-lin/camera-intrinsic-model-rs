@@ -26,11 +26,13 @@ fn main() {
     let remaped = remap(&img_l8, &xmap, &ymap);
     remaped.save("remaped0.png").unwrap();
 
-    let xy_pos_weight = compute_for_fast_remap(&xmap, &ymap);
-    let remaped1 = fast_remap(&img_l8, (new_w_h, new_w_h), &xy_pos_weight);
+    // let xy_pos_weight = compute_for_fast_remap(&xmap, &ymap);
+    let xy_pos = compute_for_fast_remap(&xmap, &ymap, img.width() as usize);
+    // Target size is w, h
+    let remaped1 = fast_remap(&img, (new_w_h, new_w_h), &xy_pos);
     remaped1.save("remaped1.png").unwrap();
 
     let img_rgb8 = DynamicImage::ImageRgb8(img.to_rgb8());
-    let remaped1 = fast_remap(&img_rgb8, (new_w_h, new_w_h), &xy_pos_weight);
+    let remaped1 = fast_remap(&img_rgb8, (new_w_h, new_w_h), &xy_pos);
     remaped1.save("remaped2.png").unwrap();
 }
