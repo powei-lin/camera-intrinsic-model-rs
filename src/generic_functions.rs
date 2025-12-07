@@ -1,6 +1,6 @@
 use super::generic_model::*;
 
-use image::{DynamicImage, GrayImage, ImageBuffer};
+use image::{DynamicImage, ImageBuffer};
 use nalgebra as na;
 use rayon::prelude::*;
 
@@ -143,27 +143,7 @@ pub fn fast_remap(
 ) -> DynamicImage {
     match img {
         DynamicImage::ImageLuma8(image_buffer) => {
-            let src = image_buffer.as_raw();
-            let src_stride = image_buffer.width() as usize; // width is stride for Luma8
-
-            let val: Vec<u8> = xy_pos_weight_vec
-                .par_iter()
-                .map(|&(offset, xw0, yw0)| unsafe {
-                    let p00 = *src.get_unchecked(offset) as u32;
-                    let p10 = *src.get_unchecked(offset + 1) as u32;
-                    let p01 = *src.get_unchecked(offset + src_stride) as u32;
-                    let p11 = *src.get_unchecked(offset + src_stride + 1) as u32;
-
-                    let xw1 = 256 - xw0 as u32;
-                    let yw1 = 256 - yw0 as u32;
-                    let xw0 = xw0 as u32;
-                    let yw0 = yw0 as u32;
-                    ((p00 * xw0 * yw0 + p10 * xw1 * yw0 + p01 * xw0 * yw1 + p11 * xw1 * yw1) >> 16)
-                        as u8
-                })
-                .collect();
-            let img = GrayImage::from_vec(new_w_h.0, new_w_h.1, val).unwrap();
-            DynamicImage::ImageLuma8(img)
+            DynamicImage::ImageLuma8(fast_remap_gray_u8(image_buffer, new_w_h, xy_pos_weight_vec))
         }
         DynamicImage::ImageRgb8(image_buffer) => {
             let src = image_buffer.as_raw();
@@ -217,11 +197,26 @@ pub fn fast_remap(
             let img = ImageBuffer::from_vec(new_w_h.0, new_w_h.1, reinterpret_vec(val)).unwrap();
             DynamicImage::ImageRgb8(img)
         }
-        DynamicImage::ImageLuma16(image_buffer) => {
+        DynamicImage::ImageLuma16(image_buffer) => DynamicImage::ImageLuma16(fast_remap_gray_u16(
+            image_buffer,
+            new_w_h,
+            xy_pos_weight_vec,
+        )),
+        _ => panic!("Only mono8, mono16, and rgb8 support fast remap."),
+    }
+}
+
+macro_rules! fast_remap_gray {
+    ($name:ident, $ty:ty) => {
+        pub fn $name(
+            image_buffer: &ImageBuffer<image::Luma<$ty>, Vec<$ty>>,
+            new_w_h: (u32, u32),
+            xy_pos_weight_vec: &[(usize, u16, u16)],
+        ) -> ImageBuffer<image::Luma<$ty>, Vec<$ty>> {
             let src = image_buffer.as_raw();
             let src_stride = image_buffer.width() as usize;
 
-            let val: Vec<u16> = xy_pos_weight_vec
+            let val: Vec<$ty> = xy_pos_weight_vec
                 .par_iter()
                 .map(|&(offset, xw0, yw0)| unsafe {
                     let p00 = *src.get_unchecked(offset) as u32;
@@ -229,20 +224,23 @@ pub fn fast_remap(
                     let p01 = *src.get_unchecked(offset + src_stride) as u32;
                     let p11 = *src.get_unchecked(offset + src_stride + 1) as u32;
 
-                    let xw1 = 256 - xw0 as u32;
-                    let yw1 = 256 - yw0 as u32;
                     let xw0 = xw0 as u32;
                     let yw0 = yw0 as u32;
+                    let xw1 = 256 - xw0;
+                    let yw1 = 256 - yw0;
+
                     ((p00 * xw0 * yw0 + p10 * xw1 * yw0 + p01 * xw0 * yw1 + p11 * xw1 * yw1) >> 16)
-                        as u16
+                        as $ty
                 })
                 .collect();
-            let img = ImageBuffer::from_vec(new_w_h.0, new_w_h.1, val).unwrap();
-            DynamicImage::ImageLuma16(img)
+
+            ImageBuffer::from_vec(new_w_h.0, new_w_h.1, val).unwrap()
         }
-        _ => panic!("Only mono8, mono16, and rgb8 support fast remap."),
-    }
+    };
 }
+
+fast_remap_gray!(fast_remap_gray_u8, u8);
+fast_remap_gray!(fast_remap_gray_u16, u16);
 
 /// Returns xmap and ymap for remaping
 ///
