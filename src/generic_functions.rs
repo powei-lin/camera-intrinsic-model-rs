@@ -82,6 +82,17 @@ fn interpolate_bilinear_weight(x: f32, y: f32) -> (u16, u16) {
     (x_weight, y_weight)
 }
 
+/// Returns linear integer offsets and specialized weights for fast remapping using raw pointers.
+///
+/// This function pre-calculates the linear memory offset (`y * src_width + x`) and integer interpolation weights
+/// (scaled by 256) for each pixel in the target image. This allows `fast_remap` to bypass stride calculations
+/// and float operations in its hot loop.
+///
+/// # Arguments
+///
+/// * `xmap` - The map of X coordinates (float).
+/// * `ymap` - The map of Y coordinates (float).
+/// * `src_width` - The width of the source image (required for linear offset calculation).
 pub fn compute_for_fast_remap(
     xmap: &na::DMatrix<f32>,
     ymap: &na::DMatrix<f32>,
@@ -109,6 +120,22 @@ fn reinterpret_vec(input: Vec<[u8; 3]>) -> Vec<u8> {
     unsafe { Vec::from_raw_parts(ptr, len, capacity) }
 }
 
+/// Performs fast image remapping using pre-calculated offsets and integer weights.
+///
+/// This function uses raw pointer access and bit-shifts to achieve high performance.
+/// It supports `ImageLuma8` (Mono8), `ImageRgb8`, and `ImageLuma16`.
+///
+/// # Safety
+///
+/// This function uses `unsafe` raw pointer access (`get_unchecked`). The `xy_pos_weight_vec` MUST be computed
+/// using `compute_for_fast_remap` with the CORRECT `src_width` corresponding to `img`. If the offsets in
+/// `xy_pos_weight_vec` are out of bounds for the provided `img` buffer, undefined behavior (likely segfault) will occur.
+///
+/// # Arguments
+///
+/// * `img` - The source image.
+/// * `new_w_h` - The dimensions (width, height) of the target image.
+/// * `xy_pos_weight_vec` - The pre-calculated offsets and weights from `compute_for_fast_remap`.
 pub fn fast_remap(
     img: &DynamicImage,
     new_w_h: (u32, u32),
