@@ -1,6 +1,6 @@
 use super::generic_model::*;
 
-use image::{DynamicImage, GenericImageView, GrayImage, ImageBuffer};
+use image::{DynamicImage, GrayImage, ImageBuffer};
 use nalgebra as na;
 use rayon::prelude::*;
 
@@ -68,32 +68,34 @@ pub fn init_undistort_map(
 }
 
 #[inline]
-fn interpolate_bilinear_weight(x: f32, y: f32) -> (u32, u32) {
+fn interpolate_bilinear_weight(x: f32, y: f32) -> (u16, u16) {
     if !(0.0..=65535.0).contains(&x) {
         panic!("x not in [0-65535]");
     }
     if !(0.0..=65535.0).contains(&y) {
         panic!("y not in [0-65535]");
     }
-    const UPPER: f32 = u8::MAX as f32;
-    let x_weight = (UPPER * (x.ceil() - x)) as u32;
-    let y_weight = (UPPER * (y.ceil() - y)) as u32;
-    // 0-255
+    const UPPER: f32 = 256.0;
+    let x_weight = (UPPER * (x.ceil() - x)) as u16;
+    let y_weight = (UPPER * (y.ceil() - y)) as u16;
+    // 0-256
     (x_weight, y_weight)
 }
 
 pub fn compute_for_fast_remap(
     xmap: &na::DMatrix<f32>,
     ymap: &na::DMatrix<f32>,
-) -> Vec<(u32, u32, u32, u32)> {
+    src_width: usize,
+) -> Vec<(usize, u16, u16)> {
     let xy_pos_weight_vec: Vec<_> = xmap
         .iter()
         .zip(ymap.iter())
         .map(|(&x, &y)| {
             let (xw, yw) = interpolate_bilinear_weight(x, y);
-            let x0 = x.floor() as u32;
-            let y0 = y.floor() as u32;
-            (x0, y0, xw, yw)
+            let x0 = x.floor() as usize;
+            let y0 = y.floor() as usize;
+            let offset = y0 * src_width + x0;
+            (offset, xw, yw)
         })
         .collect();
     xy_pos_weight_vec
@@ -110,47 +112,78 @@ fn reinterpret_vec(input: Vec<[u8; 3]>) -> Vec<u8> {
 pub fn fast_remap(
     img: &DynamicImage,
     new_w_h: (u32, u32),
-    xy_pos_weight_vec: &[(u32, u32, u32, u32)],
+    xy_pos_weight_vec: &[(usize, u16, u16)],
 ) -> DynamicImage {
     match img {
         DynamicImage::ImageLuma8(image_buffer) => {
+            let src = image_buffer.as_raw();
+            let src_stride = image_buffer.width() as usize; // width is stride for Luma8
+
             let val: Vec<u8> = xy_pos_weight_vec
                 .par_iter()
-                .map(|&(x0, y0, xw0, yw0)| {
-                    let p00 = unsafe { image_buffer.unsafe_get_pixel(x0, y0)[0] as u32 };
-                    let p10 = unsafe { image_buffer.unsafe_get_pixel(x0 + 1, y0)[0] as u32 };
-                    let p01 = unsafe { image_buffer.unsafe_get_pixel(x0, y0 + 1)[0] as u32 };
-                    let p11 = unsafe { image_buffer.unsafe_get_pixel(x0 + 1, y0 + 1)[0] as u32 };
-                    let xw1 = 255 - xw0;
-                    let yw1 = 255 - yw0;
-                    const UPPER_UPPER: u32 = 255 * 255;
-                    ((p00 * xw0 * yw0 + p10 * xw1 * yw0 + p01 * xw0 * yw1 + p11 * xw1 * yw1)
-                        / UPPER_UPPER) as u8
+                .map(|&(offset, xw0, yw0)| unsafe {
+                    let p00 = *src.get_unchecked(offset) as u32;
+                    let p10 = *src.get_unchecked(offset + 1) as u32;
+                    let p01 = *src.get_unchecked(offset + src_stride) as u32;
+                    let p11 = *src.get_unchecked(offset + src_stride + 1) as u32;
+
+                    let xw1 = 256 - xw0 as u32;
+                    let yw1 = 256 - yw0 as u32;
+                    let xw0 = xw0 as u32;
+                    let yw0 = yw0 as u32;
+                    ((p00 * xw0 * yw0 + p10 * xw1 * yw0 + p01 * xw0 * yw1 + p11 * xw1 * yw1) >> 16)
+                        as u8
                 })
                 .collect();
             let img = GrayImage::from_vec(new_w_h.0, new_w_h.1, val).unwrap();
             DynamicImage::ImageLuma8(img)
         }
         DynamicImage::ImageRgb8(image_buffer) => {
+            let src = image_buffer.as_raw();
+            let src_stride = image_buffer.width() as usize * 3;
+
             let val: Vec<[u8; 3]> = xy_pos_weight_vec
                 .par_iter()
-                .map(|&(x0, y0, xw0, yw0)| {
-                    let p00 = unsafe { image_buffer.unsafe_get_pixel(x0, y0) };
-                    let p10 = unsafe { image_buffer.unsafe_get_pixel(x0 + 1, y0) };
-                    let p01 = unsafe { image_buffer.unsafe_get_pixel(x0, y0 + 1) };
-                    let p11 = unsafe { image_buffer.unsafe_get_pixel(x0 + 1, y0 + 1) };
-                    let mut v = [0, 1, 2];
-                    v.iter_mut().for_each(|i| {
-                        let xw1 = 255 - xw0;
-                        let yw1 = 255 - yw0;
-                        let c = *i as usize;
-                        const UPPER_UPPER: u32 = 255 * 255;
-                        *i = ((p00.0[c] as u32 * xw0 * yw0
-                            + p10.0[c] as u32 * xw1 * yw0
-                            + p01.0[c] as u32 * xw0 * yw1
-                            + p11.0[c] as u32 * xw1 * yw1)
-                            / UPPER_UPPER) as u8;
-                    });
+                .map(|&(offset, xw0, yw0)| {
+                    let off3 = offset * 3;
+                    // For RGB, p00 corresponds to [r, g, b] at offset
+                    // We can read each channel.
+                    // Or read as chunky.
+
+                    let xw1 = 256 - xw0 as u32;
+                    let yw1 = 256 - yw0 as u32;
+                    let xw0 = xw0 as u32;
+                    let yw0 = yw0 as u32;
+
+                    let w00 = xw0 * yw0;
+                    let w10 = xw1 * yw0;
+                    let w01 = xw0 * yw1;
+                    let w11 = xw1 * yw1;
+
+                    let mut v = [0, 0, 0]; // Initialize with 0s
+
+                    unsafe {
+                        // Channel 0
+                        let p00 = *src.get_unchecked(off3) as u32;
+                        let p10 = *src.get_unchecked(off3 + 3) as u32;
+                        let p01 = *src.get_unchecked(off3 + src_stride) as u32;
+                        let p11 = *src.get_unchecked(off3 + src_stride + 3) as u32;
+                        v[0] = ((p00 * w00 + p10 * w10 + p01 * w01 + p11 * w11) >> 16) as u8;
+
+                        // Channel 1
+                        let p00 = *src.get_unchecked(off3 + 1) as u32;
+                        let p10 = *src.get_unchecked(off3 + 4) as u32;
+                        let p01 = *src.get_unchecked(off3 + src_stride + 1) as u32;
+                        let p11 = *src.get_unchecked(off3 + src_stride + 4) as u32;
+                        v[1] = ((p00 * w00 + p10 * w10 + p01 * w01 + p11 * w11) >> 16) as u8;
+
+                        // Channel 2
+                        let p00 = *src.get_unchecked(off3 + 2) as u32;
+                        let p10 = *src.get_unchecked(off3 + 5) as u32;
+                        let p01 = *src.get_unchecked(off3 + src_stride + 2) as u32;
+                        let p11 = *src.get_unchecked(off3 + src_stride + 5) as u32;
+                        v[2] = ((p00 * w00 + p10 * w10 + p01 * w01 + p11 * w11) >> 16) as u8;
+                    }
                     v
                 })
                 .collect();
@@ -158,18 +191,23 @@ pub fn fast_remap(
             DynamicImage::ImageRgb8(img)
         }
         DynamicImage::ImageLuma16(image_buffer) => {
+            let src = image_buffer.as_raw();
+            let src_stride = image_buffer.width() as usize;
+
             let val: Vec<u16> = xy_pos_weight_vec
                 .par_iter()
-                .map(|&(x0, y0, xw0, yw0)| {
-                    let p00 = unsafe { image_buffer.unsafe_get_pixel(x0, y0)[0] as u32 };
-                    let p10 = unsafe { image_buffer.unsafe_get_pixel(x0 + 1, y0)[0] as u32 };
-                    let p01 = unsafe { image_buffer.unsafe_get_pixel(x0, y0 + 1)[0] as u32 };
-                    let p11 = unsafe { image_buffer.unsafe_get_pixel(x0 + 1, y0 + 1)[0] as u32 };
-                    let xw1 = 255 - xw0;
-                    let yw1 = 255 - yw0;
-                    const UPPER_UPPER: u32 = 255 * 255;
-                    ((p00 * xw0 * yw0 + p10 * xw1 * yw0 + p01 * xw0 * yw1 + p11 * xw1 * yw1)
-                        / UPPER_UPPER) as u16
+                .map(|&(offset, xw0, yw0)| unsafe {
+                    let p00 = *src.get_unchecked(offset) as u32;
+                    let p10 = *src.get_unchecked(offset + 1) as u32;
+                    let p01 = *src.get_unchecked(offset + src_stride) as u32;
+                    let p11 = *src.get_unchecked(offset + src_stride + 1) as u32;
+
+                    let xw1 = 256 - xw0 as u32;
+                    let yw1 = 256 - yw0 as u32;
+                    let xw0 = xw0 as u32;
+                    let yw0 = yw0 as u32;
+                    ((p00 * xw0 * yw0 + p10 * xw1 * yw0 + p01 * xw0 * yw1 + p11 * xw1 * yw1) >> 16)
+                        as u16
                 })
                 .collect();
             let img = ImageBuffer::from_vec(new_w_h.0, new_w_h.1, val).unwrap();
