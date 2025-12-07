@@ -21,9 +21,9 @@ exclude = [
 ]
 
 [dependencies]
-image = { version = "0.25.8", default-features = false, features = ["rayon"] }
+image = { version = "0.25.9", default-features = false, features = ["rayon"] }
 nalgebra = "0.34.1"
-rayon = "1.10.0"
+rayon = "1.11.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
@@ -41,6 +41,6 @@ name = "bench"
 harness = false
 
 [dev-dependencies]
-diol = "0.13.0"
+diol = "0.13.1"
 imageproc = "0.25.0"
 rand = "0.9"
