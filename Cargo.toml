@@ -1,6 +1,6 @@
 [package]
 name = "camera-intrinsic-model"
-version = "0.7.0"
+version = "0.7.1"
 edition = "2024"
 authors = ["Powei Lin <poweilin1994@gmail.com>"]
 readme = "README.md"
@@ -23,6 +23,7 @@ exclude = [
 [dependencies]
 image = { version = "0.25.9", default-features = false, features = ["rayon"] }
 nalgebra = "0.34.1"
+num-traits = "0.2.19"
 rayon = "1.11.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
