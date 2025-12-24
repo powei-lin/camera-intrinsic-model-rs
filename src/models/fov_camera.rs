@@ -91,7 +91,7 @@ impl<T: na::RealField + Clone> CameraModel<T> for FovCamera<T> {
 
         let two = T::from_f64(2.0).unwrap();
 
-        let tanwhalf = w.clone() / two.clone();
+        let tanwhalf = (w.clone() / two.clone()).tan();
         let atan_wrd = (two.clone() * tanwhalf.clone() * r.clone()).atan2(z);
 
         let eps_sqrt = T::from_f64(f64::EPSILON).unwrap().sqrt();
