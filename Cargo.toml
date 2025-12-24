@@ -40,6 +40,10 @@ name = "project_points"
 name = "bench_remap"
 harness = false
 
+[[bench]]
+name = "bench_unproject"
+harness = false
+
 [dev-dependencies]
 diol = "0.13.1"
 imageproc = "0.25.0"
