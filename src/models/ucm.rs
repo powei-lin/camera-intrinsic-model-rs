@@ -2,6 +2,7 @@ use crate::generic_model::{CameraModel, ModelCast};
 use nalgebra as na;
 use serde::{Deserialize, Serialize};
 
+/// Unified Camera Model (UCM).
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub struct UCM<T: na::RealField + Clone> {
     pub fx: T,
@@ -13,6 +14,7 @@ pub struct UCM<T: na::RealField + Clone> {
     pub height: u32,
 }
 impl<T: na::RealField + Clone> UCM<T> {
+    /// Creates a new UCM instance.
     pub fn new(params: &na::DVector<T>, width: u32, height: u32) -> UCM<T> {
         if params.shape() != (5, 1) {
             panic!("the length of the vector should be 5");
@@ -27,9 +29,11 @@ impl<T: na::RealField + Clone> UCM<T> {
             height,
         }
     }
+    /// Creates a new UCM instance from another with different precision.
     pub fn from<U: na::RealField + Clone>(m: &UCM<U>) -> UCM<T> {
         UCM::new(&m.cast(), m.width, m.height)
     }
+    /// Creates a default UCM instance with zero parameters.
     pub fn zeros() -> UCM<T> {
         UCM {
             fx: T::zero(),
@@ -120,9 +124,9 @@ impl<T: na::RealField + Clone> CameraModel<T> for UCM<T> {
         let m = one.clone() + r2;
 
         let k = (xi.clone() + n) / m;
-        let z = k.clone() - xi;
+        // z = k - xi
 
-        na::Vector3::new(k.clone() * mx / z.clone(), k * my / z, one)
+        na::Vector3::new(k.clone() * mx, k.clone() * my, k - xi)
     }
     fn camera_params(&self) -> nalgebra::DVector<T> {
         na::dvector![

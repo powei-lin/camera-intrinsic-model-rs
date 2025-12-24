@@ -2,6 +2,7 @@ use crate::generic_model::{CameraModel, ModelCast};
 use nalgebra as na;
 use serde::{Deserialize, Serialize};
 
+/// OpenCV 5-parameter Camera Model.
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub struct OpenCVModel5<T: na::RealField + Clone> {
     pub fx: T,
@@ -18,6 +19,7 @@ pub struct OpenCVModel5<T: na::RealField + Clone> {
 }
 impl<T: na::RealField + Clone> ModelCast<T> for OpenCVModel5<T> {}
 impl<T: na::RealField + Clone> OpenCVModel5<T> {
+    /// Creates a new OpenCVModel5 instance.
     pub fn new(params: &na::DVector<T>, width: u32, height: u32) -> OpenCVModel5<T> {
         OpenCVModel5 {
             fx: params[0].clone(),
@@ -33,6 +35,7 @@ impl<T: na::RealField + Clone> OpenCVModel5<T> {
             height,
         }
     }
+    /// Creates a default OpenCVModel5 instance with zero parameters.
     pub fn zeros() -> OpenCVModel5<T> {
         OpenCVModel5 {
             fx: T::zero(),
@@ -80,6 +83,7 @@ impl<T: na::RealField + Clone> OpenCVModel5<T> {
             + self.p2.clone() * xn.clone() * yn.clone();
         (xd, yd)
     }
+    /// Creates a new OpenCVModel5 instance from another with different precision.
     pub fn from<U: na::RealField + Clone>(m: &OpenCVModel5<U>) -> OpenCVModel5<T> {
         OpenCVModel5::new(&m.cast(), m.width, m.height)
     }
@@ -176,7 +180,7 @@ impl<T: na::RealField + Clone> CameraModel<T> for OpenCVModel5<T> {
                     break;
                 }
             }
-            na::Vector3::new(xn, yn, one)
+            na::Vector3::new(xn, yn, one).normalize()
         } else {
             na::Vector3::new(zero.clone(), zero, one)
         }

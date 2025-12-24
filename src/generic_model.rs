@@ -199,15 +199,38 @@ pub trait CameraModel<T: na::RealField + Clone>
 where
     Self: Sync,
 {
+    /// Sets the intrinsic parameters of the camera model.
     fn set_params(&mut self, params: &na::DVector<T>);
+
+    /// Returns the intrinsic parameters of the camera model.
     fn params(&self) -> na::DVector<T>;
+
+    /// Returns the camera system parameters (e.g., fx, fy, cx, cy).
     fn camera_params(&self) -> na::DVector<T>;
+
+    /// Returns the distortion parameters.
     fn distortion_params(&self) -> na::DVector<T>;
+
+    /// Returns the image width.
     fn width(&self) -> T;
+
+    /// Returns the image height.
     fn height(&self) -> T;
+
+    /// Sets the image width and height.
     fn set_w_h(&mut self, w: u32, h: u32);
+
+    /// Projects a single 3D point to the 2D image plane.
+    ///
+    /// # Arguments
+    /// * `pt` - A 3D point in camera coordinates.
     fn project_one(&self, pt: &na::Vector3<T>) -> na::Vector2<T>;
+
+    /// Returns the valid bounds for distortion parameters during optimization.
     fn distortion_params_bound(&self) -> Vec<(usize, (f64, f64))>;
+
+    /// Projects multiple 3D points to the 2D image plane in parallel.
+    /// Returns None if the point projects outside the image bounds.
     fn project(&self, p3d: &[na::Vector3<T>]) -> Vec<Option<na::Vector2<T>>> {
         p3d.par_iter()
             .map(|pt| {
@@ -224,7 +247,14 @@ where
             })
             .collect()
     }
+    /// Unprojects a single 2D point to a 3D unit vector.
+    ///
+    /// # Arguments
+    /// * `pt` - A 2D point in pixel coordinates.
     fn unproject_one(&self, pt: &na::Vector2<T>) -> na::Vector3<T>;
+
+    /// Unprojects multiple 2D points to 3D unit vectors in parallel.
+    /// Returns None if the point is outside the image bounds.
     fn unproject(&self, p2d: &[na::Vector2<T>]) -> Vec<Option<na::Vector3<T>>> {
         p2d.par_iter()
             .map(|pt| {

@@ -2,6 +2,7 @@ use crate::generic_model::{CameraModel, ModelCast};
 use nalgebra as na;
 use serde::{Deserialize, Serialize};
 
+/// FOV Camera Model.
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub struct FovCamera<T: na::RealField + Clone> {
     pub fx: T,
@@ -13,6 +14,7 @@ pub struct FovCamera<T: na::RealField + Clone> {
     pub height: u32,
 }
 impl<T: na::RealField + Clone> FovCamera<T> {
+    /// Creates a new FovCamera instance.
     pub fn new(params: &na::DVector<T>, width: u32, height: u32) -> FovCamera<T> {
         if params.shape() != (5, 1) {
             panic!("the length of the vector should be 5");
@@ -27,9 +29,11 @@ impl<T: na::RealField + Clone> FovCamera<T> {
             height,
         }
     }
+    /// Creates a new FovCamera instance from another with different precision.
     pub fn from<U: na::RealField + Clone>(m: &FovCamera<U>) -> FovCamera<T> {
         FovCamera::new(&m.cast(), m.width, m.height)
     }
+    /// Creates a default FovCamera instance with zero parameters.
     pub fn zeros() -> FovCamera<T> {
         FovCamera {
             fx: T::zero(),
@@ -135,7 +139,7 @@ impl<T: na::RealField + Clone> CameraModel<T> for FovCamera<T> {
             let cos_rd_w = (rd.clone() * w.clone()).cos();
             let ru = sin_rd_w / (rd * mul2tanwby2);
 
-            na::Vector3::new(mx * ru.clone() / cos_rd_w.clone(), my * ru / cos_rd_w, one)
+            na::Vector3::new(mx * ru.clone(), my * ru, cos_rd_w)
         } else {
             na::Vector3::new(mx, my, one)
         }

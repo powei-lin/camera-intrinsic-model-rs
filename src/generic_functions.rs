@@ -279,12 +279,15 @@ pub fn estimate_new_camera_matrix_for_undistort(
         na::Vector2::new(0.0, cy),
     ];
     let undist_pts = camera_model.unproject(&p2ds);
+    let undist_pts = undist_pts.iter().map(|p| {
+        let p = p.unwrap();
+        na::Vector2::new(p.x / p.z, p.y / p.z)
+    });
     let mut min_x = f64::MAX;
     let mut min_y = f64::MAX;
     let mut max_x = f64::MIN;
     let mut max_y = f64::MIN;
     for p in undist_pts {
-        let p = p.unwrap();
         min_x = min_x.min(p.x);
         min_y = min_y.min(p.y);
         max_x = max_x.max(p.x);

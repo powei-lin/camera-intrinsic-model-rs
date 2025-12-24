@@ -1,6 +1,6 @@
 [package]
 name = "camera-intrinsic-model"
-version = "0.7.3"
+version = "0.8.0"
 edition = "2024"
 authors = ["Powei Lin <poweilin1994@gmail.com>"]
 readme = "README.md"
@@ -37,7 +37,11 @@ name = "stereo_rectify"
 name = "project_points"
 
 [[bench]]
-name = "bench"
+name = "bench_remap"
+harness = false
+
+[[bench]]
+name = "bench_unproject"
 harness = false
 
 [dev-dependencies]

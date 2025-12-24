@@ -2,6 +2,7 @@ use crate::generic_model::{CameraModel, ModelCast};
 use nalgebra as na;
 use serde::{Deserialize, Serialize};
 
+/// Extended Unified Camera Model (EUCM).
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub struct EUCM<T: na::RealField + Clone> {
     pub fx: T,
@@ -14,6 +15,7 @@ pub struct EUCM<T: na::RealField + Clone> {
     pub height: u32,
 }
 impl<T: na::RealField + Clone> EUCM<T> {
+    /// Creates a new EUCM instance.
     pub fn new(params: &na::DVector<T>, width: u32, height: u32) -> EUCM<T> {
         if params.shape() != (6, 1) {
             panic!("the length of the vector should be 6");
@@ -29,9 +31,11 @@ impl<T: na::RealField + Clone> EUCM<T> {
             height,
         }
     }
+    /// Creates a new EUCM instance from another with different precision.
     pub fn from<U: na::RealField + Clone>(m: &EUCM<U>) -> EUCM<T> {
         EUCM::new(&m.cast(), m.width, m.height)
     }
+    /// Creates a default EUCM instance with zero parameters.
     pub fn zeros() -> EUCM<T> {
         EUCM {
             fx: T::zero(),
@@ -126,7 +130,11 @@ impl<T: na::RealField + Clone> CameraModel<T> for EUCM<T> {
 
         let k = tmp1 / tmp2;
 
-        na::Vector3::new(mx / k.clone(), my / k, one)
+        if k < T::zero() {
+            -na::Vector3::new(mx, my, k)
+        } else {
+            na::Vector3::new(mx, my, k)
+        }
     }
 
     fn camera_params(&self) -> nalgebra::DVector<T> {
