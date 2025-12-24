@@ -2,6 +2,7 @@ use crate::generic_model::{CameraModel, ModelCast};
 use nalgebra as na;
 use serde::{Deserialize, Serialize};
 
+/// Extended Unified Camera Model with Tangential Distortion (EUCMT).
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub struct EUCMT<T: na::RealField + Clone> {
     pub fx: T,
@@ -16,6 +17,7 @@ pub struct EUCMT<T: na::RealField + Clone> {
     pub height: u32,
 }
 impl<T: na::RealField + Clone> EUCMT<T> {
+    /// Creates a new EUCMT instance.
     pub fn new(params: &na::DVector<T>, width: u32, height: u32) -> EUCMT<T> {
         if params.shape() != (8, 1) {
             panic!("the length of the vector should be 8");
@@ -33,9 +35,11 @@ impl<T: na::RealField + Clone> EUCMT<T> {
             height,
         }
     }
+    /// Creates a new EUCMT instance from another with different precision.
     pub fn from<U: na::RealField + Clone>(m: &EUCMT<U>) -> EUCMT<T> {
         EUCMT::new(&m.cast(), m.width, m.height)
     }
+    /// Creates a default EUCMT instance with zero parameters.
     pub fn zeros() -> EUCMT<T> {
         EUCMT {
             fx: T::zero(),
@@ -154,9 +158,9 @@ impl<T: na::RealField + Clone> CameraModel<T> for EUCMT<T> {
         let k = tmp1 / tmp2;
 
         if k < T::zero() {
-            -na::Vector3::new(mx / k.clone(), my / k, one)
+            -na::Vector3::new(mx, my, k)
         } else {
-            na::Vector3::new(mx / k.clone(), my / k, one)
+            na::Vector3::new(mx, my, k)
         }
     }
 

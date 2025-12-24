@@ -2,6 +2,7 @@ use crate::generic_model::{CameraModel, ModelCast};
 use nalgebra as na;
 use serde::{Deserialize, Serialize};
 
+/// Kannala-Brandt 4-parameter Camera Model.
 #[derive(Serialize, Deserialize, Clone, Copy, Default, Debug)]
 pub struct KannalaBrandt4<T: na::RealField + Clone> {
     pub fx: T,
@@ -17,6 +18,7 @@ pub struct KannalaBrandt4<T: na::RealField + Clone> {
 }
 impl<T: na::RealField + Clone> ModelCast<T> for KannalaBrandt4<T> {}
 impl<T: na::RealField + Clone> KannalaBrandt4<T> {
+    /// Creates a new KannalaBrandt4 instance.
     pub fn new(params: &na::DVector<T>, width: u32, height: u32) -> KannalaBrandt4<T> {
         KannalaBrandt4 {
             fx: params[0].clone(),
@@ -31,6 +33,7 @@ impl<T: na::RealField + Clone> KannalaBrandt4<T> {
             height,
         }
     }
+    /// Creates a default KannalaBrandt4 instance with zero parameters.
     pub fn zeros() -> KannalaBrandt4<T> {
         KannalaBrandt4 {
             fx: T::zero(),
@@ -60,6 +63,7 @@ impl<T: na::RealField + Clone> KannalaBrandt4<T> {
     }
     // fn df_dtheta removed as it is not used by bisection
 
+    /// Creates a new KannalaBrandt4 instance from another with different precision.
     pub fn from<U: na::RealField + Clone>(m: &KannalaBrandt4<U>) -> KannalaBrandt4<T> {
         KannalaBrandt4::new(&m.cast(), m.width, m.height)
     }

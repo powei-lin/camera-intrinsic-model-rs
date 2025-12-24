@@ -2,6 +2,7 @@ use crate::generic_model::{CameraModel, ModelCast};
 use nalgebra as na;
 use serde::{Deserialize, Serialize};
 
+/// FTheta Camera Model.
 #[derive(Serialize, Deserialize, Clone, Copy, Default, Debug)]
 pub struct Ftheta<T: na::RealField + Clone> {
     pub fx: T,
@@ -19,6 +20,7 @@ pub struct Ftheta<T: na::RealField + Clone> {
 }
 impl<T: na::RealField + Clone> ModelCast<T> for Ftheta<T> {}
 impl<T: na::RealField + Clone> Ftheta<T> {
+    /// Creates a new Ftheta instance.
     pub fn new(params: &na::DVector<T>, width: u32, height: u32) -> Ftheta<T> {
         Ftheta {
             fx: params[0].clone(),
@@ -35,6 +37,7 @@ impl<T: na::RealField + Clone> Ftheta<T> {
             height,
         }
     }
+    /// Creates a default Ftheta instance with zero parameters.
     pub fn zeros() -> Ftheta<T> {
         Ftheta {
             fx: T::zero(),
@@ -67,6 +70,7 @@ impl<T: na::RealField + Clone> Ftheta<T> {
     }
     // fn df_dtheta removed as it is not used by bisection
 
+    /// Creates a new Ftheta instance from another with different precision.
     pub fn from<U: na::RealField + Clone>(m: &Ftheta<U>) -> Ftheta<T> {
         Ftheta::new(&m.cast(), m.width, m.height)
     }
