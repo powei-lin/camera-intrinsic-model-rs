@@ -37,7 +37,7 @@ name = "stereo_rectify"
 name = "project_points"
 
 [[bench]]
-name = "bench"
+name = "bench_remap"
 harness = false
 
 [dev-dependencies]
