@@ -126,7 +126,11 @@ impl<T: na::RealField + Clone> CameraModel<T> for EUCM<T> {
 
         let k = tmp1 / tmp2;
 
-        na::Vector3::new(mx / k.clone(), my / k, one)
+        if k < T::zero() {
+            -na::Vector3::new(mx / k.clone(), my / k, one)
+        } else {
+            na::Vector3::new(mx / k.clone(), my / k, one)
+        }
     }
 
     fn camera_params(&self) -> nalgebra::DVector<T> {

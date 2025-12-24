@@ -135,7 +135,7 @@ impl<T: na::RealField + Clone> CameraModel<T> for FovCamera<T> {
             let cos_rd_w = (rd.clone() * w.clone()).cos();
             let ru = sin_rd_w / (rd * mul2tanwby2);
 
-            na::Vector3::new(mx * ru.clone() / cos_rd_w.clone(), my * ru / cos_rd_w, one)
+            na::Vector3::new(mx * ru.clone(), my * ru, cos_rd_w)
         } else {
             na::Vector3::new(mx, my, one)
         }

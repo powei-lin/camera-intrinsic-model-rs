@@ -65,19 +65,8 @@ impl<T: na::RealField + Clone> Ftheta<T> {
             + k5.clone() * theta5
             + k6.clone() * theta6
     }
-    fn df_dtheta(k2: &T, k3: &T, k4: &T, k5: &T, k6: &T, theta: &T) -> T {
-        let theta2 = theta.clone() * theta.clone();
-        let theta3 = theta2.clone() * theta.clone();
-        let theta4 = theta3.clone() * theta.clone();
-        let theta5 = theta4.clone() * theta.clone();
+    // fn df_dtheta removed as it is not used by bisection
 
-        T::from_f64(1.0).unwrap()
-            + T::from_f64(2.0).unwrap() * k2.clone() * theta.clone()
-            + T::from_f64(3.0).unwrap() * k3.clone() * theta2.clone()
-            + T::from_f64(4.0).unwrap() * k4.clone() * theta3.clone()
-            + T::from_f64(5.0).unwrap() * k5.clone() * theta4.clone()
-            + T::from_f64(6.0).unwrap() * k6.clone() * theta5.clone()
-    }
     pub fn from<U: na::RealField + Clone>(m: &Ftheta<U>) -> Ftheta<T> {
         Ftheta::new(&m.cast(), m.width, m.height)
     }
@@ -124,11 +113,11 @@ impl<T: na::RealField + Clone> CameraModel<T> for Ftheta<T> {
 
     fn project_one(&self, pt: &nalgebra::Vector3<T>) -> nalgebra::Vector2<T> {
         let params = self.params();
-        let xn = pt[0].clone() / pt[2].clone();
-        let yn = pt[1].clone() / pt[2].clone();
-        let r2 = xn.clone() * xn.clone() + yn.clone() * yn.clone();
-        let r = r2.sqrt();
-        let theta = r.clone().atan();
+        let x = pt[0].clone();
+        let y = pt[1].clone();
+        let z = pt[2].clone();
+        let r_xy = (x.clone() * x.clone() + y.clone() * y.clone()).sqrt();
+        let theta = r_xy.clone().atan2(z);
 
         let fx = &params[0];
         let fy = &params[1];
@@ -141,9 +130,29 @@ impl<T: na::RealField + Clone> CameraModel<T> for Ftheta<T> {
         let k6 = &params[8];
 
         let theta_d = Self::f_theta(k2, k3, k4, k5, k6, &theta);
-        let d = theta_d / r.clone();
-        let px = fx.clone() * (xn * d.clone()) + cx.clone();
-        let py = fy.clone() * (yn * d) + cy.clone();
+
+        // x_img = theta_d * (x / r_xy)
+        // If r_xy is small, x/r_xy is undefined, but x, y -> 0 so x_img -> 0.
+        // However, if theta -> 0, theta_d -> 0. Limit is finite.
+        // But if theta -> pi (r_xy -> 0, z < 0), then theta_d is large, but x/r_xy is undefined?
+        // Actually if r_xy=0, x=0, y=0.
+        let (mx, my) = if r_xy > T::from_f64(1e-6).unwrap() {
+            let d = theta_d / r_xy;
+            (x * d.clone(), y * d)
+        } else {
+            // r_xy -> 0.
+            // If z > 0, theta -> 0, theta_d -> 0. mx, my -> 0.
+            // If z < 0, theta -> pi. theta_d -> f(pi).
+            // But x, y are 0. So projection should be 0?
+            // In pinhole, (0,0, -1) projects to ??
+            // Fish-eye (0,0,-1) usually depends on max FOV.
+            // But mathematically, singularity at poles?
+            // If strictly on axis, x=0, y=0. So result is cx, cy.
+            (T::zero(), T::zero())
+        };
+
+        let px = fx.clone() * mx + cx.clone();
+        let py = fy.clone() * my + cy.clone();
         na::Vector2::new(px, py)
     }
 
@@ -153,31 +162,31 @@ impl<T: na::RealField + Clone> CameraModel<T> for Ftheta<T> {
 
         let rd2 = xd.clone() * xd.clone() + yd.clone() * yd.clone();
         let rd = rd2.sqrt();
-        let mut theta = rd.clone();
         let theta_threshold = T::from_f64(1e-6).unwrap();
         let one = T::from_f64(1.0).unwrap();
         let zero = T::from_f64(0.0).unwrap();
-        if theta > theta_threshold {
-            for _ in 0..5 {
-                let theta_next = theta.clone()
-                    - (Self::f_theta(
-                        &self.k2,
-                        &self.k3,
-                        &self.k4,
-                        &self.k5,
-                        &self.k6,
-                        &theta.clone(),
-                    ) - rd.clone())
-                        / Self::df_dtheta(&self.k2, &self.k3, &self.k4, &self.k5, &self.k6, &theta);
-                if (theta_next.clone() - theta).abs() < theta_threshold {
-                    theta = theta_next.clone();
-                    break;
+        if rd > theta_threshold {
+            let mut lower = T::zero();
+            let mut upper = T::pi();
+
+            for _ in 0..50 {
+                let mid = (lower.clone() + upper.clone()) / T::from_f64(2.0).unwrap();
+                let f_val = Self::f_theta(&self.k2, &self.k3, &self.k4, &self.k5, &self.k6, &mid);
+                if f_val < rd {
+                    lower = mid;
+                } else {
+                    upper = mid;
                 }
-                theta = theta_next;
             }
-            let r = theta.clone().tan();
-            let f_theta = Self::f_theta(&self.k2, &self.k3, &self.k4, &self.k5, &self.k6, &theta);
-            na::Vector3::new(xd * r.clone() / f_theta.clone(), yd * r / f_theta, one)
+            let theta = (lower + upper) / T::from_f64(2.0).unwrap();
+
+            let sin_theta = theta.clone().sin();
+            let cos_theta = theta.cos();
+            na::Vector3::new(
+                xd * sin_theta.clone() / rd.clone(),
+                yd * sin_theta / rd,
+                cos_theta,
+            )
         } else {
             na::Vector3::new(zero.clone(), zero, one)
         }

@@ -120,9 +120,9 @@ impl<T: na::RealField + Clone> CameraModel<T> for UCM<T> {
         let m = one.clone() + r2;
 
         let k = (xi.clone() + n) / m;
-        let z = k.clone() - xi;
+        // z = k - xi
 
-        na::Vector3::new(k.clone() * mx / z.clone(), k * my / z, one)
+        na::Vector3::new(k.clone() * mx, k.clone() * my, k - xi)
     }
     fn camera_params(&self) -> nalgebra::DVector<T> {
         na::dvector![
