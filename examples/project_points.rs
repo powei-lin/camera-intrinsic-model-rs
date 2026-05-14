@@ -1,4 +1,6 @@
 use camera_intrinsic_model::model_from_json;
+#[cfg(feature = "nalgebra033")]
+extern crate nalgebra033 as nalgebra;
 use nalgebra as na;
 use rand::random;
 use rayon::prelude::*;

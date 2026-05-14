@@ -328,6 +328,8 @@ pub fn estimate_new_camera_matrix_for_undistort(
 ///
 /// ```
 /// use camera_intrinsic_model::*;
+/// # #[cfg(feature = "nalgebra033")]
+/// # extern crate nalgebra033 as nalgebra;
 /// use nalgebra as na;
 /// let model0 = model_from_json("data/eucm0.json");
 /// let model1 = model_from_json("data/eucm1.json");

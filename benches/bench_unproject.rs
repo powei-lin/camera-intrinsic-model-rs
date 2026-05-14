@@ -1,5 +1,7 @@
 use camera_intrinsic_model::{GenericModel, OpenCVModel5, model_from_json};
 use diol::prelude::*;
+#[cfg(feature = "nalgebra033")]
+extern crate nalgebra033 as nalgebra;
 use nalgebra as na;
 
 fn main() -> eyre::Result<()> {

@@ -9,6 +9,8 @@
 //! let (xmap, ymap) = model.init_undistort_map(&p, (new_w_h, new_w_h), None);
 //! // let remaped = remap(&img, &xmap, &ymap);
 //! ```
+#[cfg(feature = "nalgebra033")]
+extern crate nalgebra033 as nalgebra;
 pub mod generic_functions;
 pub mod generic_model;
 pub mod io;
