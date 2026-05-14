@@ -1,5 +1,7 @@
 use camera_intrinsic_model::{compute_for_fast_remap, fast_remap, remap};
 use image::{DynamicImage, GrayImage};
+#[cfg(feature = "nalgebra033")]
+extern crate nalgebra033 as nalgebra;
 use nalgebra as na;
 
 #[test]

@@ -3,6 +3,8 @@ use std::arch::aarch64::*;
 use camera_intrinsic_model::{compute_for_fast_remap, fast_remap, model_from_json, remap};
 use diol::prelude::*;
 use image::{DynamicImage, ImageReader};
+#[cfg(feature = "nalgebra033")]
+extern crate nalgebra033 as nalgebra;
 use nalgebra::{self as na};
 use rayon::{
     iter::{IndexedParallelIterator, ParallelIterator},

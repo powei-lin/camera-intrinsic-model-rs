@@ -1,5 +1,7 @@
 use camera_intrinsic_model::*;
 use image::{DynamicImage, ImageReader};
+#[cfg(feature = "nalgebra033")]
+extern crate nalgebra033 as nalgebra;
 use nalgebra as na;
 
 fn main() {
